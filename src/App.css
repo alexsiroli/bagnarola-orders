@@ -561,6 +561,25 @@ body {
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
+/* Bottoni di aggiunta per cibi e bevande */
+.add-btn {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.4rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  height: 100%;
+  min-height: 38px;
+}
+
+.add-btn:hover {
+  background-color: #229954;
+}
+
 /* Category header con bottone */
 .category-header {
   display: flex;
