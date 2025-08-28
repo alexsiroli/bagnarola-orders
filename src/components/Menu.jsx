@@ -7,6 +7,8 @@ const Menu = () => {
   const [menuCompositi, setMenuCompositi] = useState([])
   const [editingItem, setEditingItem] = useState(null)
   const [editingMenu, setEditingMenu] = useState(null)
+  const [showCreateMenuDialog, setShowCreateMenuDialog] = useState(false)
+  const [newMenu, setNewMenu] = useState({ name: '', price: '', items: [] })
 
   useEffect(() => {
     const q = query(collection(db, 'menu'), orderBy('createdAt', 'asc'))
@@ -59,7 +61,7 @@ const Menu = () => {
     }
   }
 
-  const handleAddMenu = async (newMenu) => {
+  const handleAddMenu = async () => {
     if (!newMenu.name || !newMenu.price || !newMenu.items || newMenu.items.length === 0) {
       alert('Compila tutti i campi obbligatori e seleziona almeno un prodotto')
       return
@@ -80,10 +82,9 @@ const Menu = () => {
         createdAt: new Date()
       })
       
-      // Reset del form
-      newMenu.name = ''
-      newMenu.price = ''
-      newMenu.items = []
+      // Reset del form e chiudi dialog
+      setNewMenu({ name: '', price: '', items: [] })
+      setShowCreateMenuDialog(false)
     } catch (error) {
       console.error('Errore nell\'aggiunta del menu:', error)
       alert('Errore nell\'aggiunta del menu')
@@ -278,9 +279,6 @@ const Menu = () => {
         <span className="item-name">{menu.name}</span>
         <span className="item-price">€{menu.price.toFixed(2)}</span>
         <span className="item-quantity">{menu.minQuantity}</span>
-        <span className="item-composition">
-          {menu.items.map(itemId => getItemName(itemId)).join(', ')}
-        </span>
         <div className="item-actions">
           <button onClick={() => startEditingMenu(menu)} className="edit-btn">
             ✏️
@@ -333,71 +331,29 @@ const Menu = () => {
     )
   }
 
-  const renderAddMenuRow = () => {
-    const [newMenu, setNewMenu] = useState({ name: '', price: '', items: [] })
-
-    return (
-      <div key="add-menu" className="menu-item add-row">
-        <input
-          type="text"
-          placeholder="Nome Menu"
-          value={newMenu.name}
-          onChange={(e) => setNewMenu({...newMenu, name: e.target.value})}
-          className="add-input"
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Prezzo"
-          value={newMenu.price}
-          onChange={(e) => setNewMenu({...newMenu, price: e.target.value})}
-          className="add-input"
-        />
-        <select
-          multiple
-          value={newMenu.items}
-          onChange={(e) => {
-            const selectedItems = Array.from(e.target.selectedOptions, option => option.value)
-            setNewMenu({...newMenu, items: selectedItems})
-          }}
-          className="add-input"
-        >
-          {menuItems.map(item => (
-            <option key={item.id} value={item.id}>
-              {item.name} (€{item.price.toFixed(2)})
-            </option>
-          ))}
-        </select>
-        <button 
-          onClick={() => {
-            handleAddMenu(newMenu)
-            setNewMenu({ name: '', price: '', items: [] })
-          }} 
-          className="add-btn"
-        >
-          ➕
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div className="menu-section">
       <h2>🍽️ Gestione Menu</h2>
       
       {/* Sezione Menu Compositi */}
       <div className="menu-category">
-        <h3>🍽️ Menu Compositi</h3>
+        <div className="category-header">
+          <h3>🍽️ Menu Compositi</h3>
+          <button 
+            onClick={() => setShowCreateMenuDialog(true)}
+            className="create-menu-btn"
+          >
+            ➕ Crea Menu
+          </button>
+        </div>
         <div className="menu-header">
           <span className="header-name">Nome Menu</span>
           <span className="header-price">Prezzo</span>
           <span className="header-quantity">Quantità</span>
-          <span className="header-composition">Composizione</span>
           <span className="header-actions">Azioni</span>
         </div>
         <div className="menu-list">
           {menuCompositi.map(renderMenuComposito)}
-          {renderAddMenuRow()}
         </div>
       </div>
 
@@ -430,6 +386,79 @@ const Menu = () => {
           {renderAddRow('bevande')}
         </div>
       </div>
+
+      {/* Dialog per creare nuovo menu */}
+      {showCreateMenuDialog && (
+        <div className="dialog-overlay">
+          <div className="dialog-content">
+            <div className="dialog-header">
+              <h3>➕ Crea Nuovo Menu</h3>
+              <button 
+                onClick={() => setShowCreateMenuDialog(false)}
+                className="close-dialog-btn"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="dialog-body">
+              <div className="form-group">
+                <label>Nome Menu:</label>
+                <input
+                  type="text"
+                  placeholder="Es: Menu Completo, Pranzo Business..."
+                  value={newMenu.name}
+                  onChange={(e) => setNewMenu({...newMenu, name: e.target.value})}
+                  className="dialog-input"
+                />
+              </div>
+              <div className="form-group">
+                <label>Prezzo (€):</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={newMenu.price}
+                  onChange={(e) => setNewMenu({...newMenu, price: e.target.value})}
+                  className="dialog-input"
+                />
+              </div>
+              <div className="form-group">
+                <label>Seleziona Prodotti:</label>
+                <select
+                  multiple
+                  value={newMenu.items}
+                  onChange={(e) => {
+                    const selectedItems = Array.from(e.target.selectedOptions, option => option.value)
+                    setNewMenu({...newMenu, items: selectedItems})
+                  }}
+                  className="dialog-select"
+                >
+                  {menuItems.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} (€{item.price.toFixed(2)}) - {item.category}
+                    </option>
+                  ))}
+                </select>
+                <small>Usa Ctrl/Cmd + click per selezionare più prodotti</small>
+              </div>
+            </div>
+            <div className="dialog-footer">
+              <button 
+                onClick={() => setShowCreateMenuDialog(false)}
+                className="cancel-dialog-btn"
+              >
+                Annulla
+              </button>
+              <button 
+                onClick={handleAddMenu}
+                className="create-dialog-btn"
+              >
+                Crea Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
