@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { collection, addDoc, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore'
+import { collection, addDoc, onSnapshot, query, orderBy, getDocs, updateDoc, doc, increment, where } from 'firebase/firestore'
 
 const Cassa = () => {
   const [menuItems, setMenuItems] = useState([])
@@ -12,33 +12,33 @@ const Cassa = () => {
   const [showOrderSummary, setShowOrderSummary] = useState(false)
   const [confirmedOrder, setConfirmedOrder] = useState(null)
 
-  // Carica i prodotti dal menu
+  // Carica i prodotti dal menu in tempo reale
   useEffect(() => {
-    const loadMenu = async () => {
-      try {
-        // Carica prodotti singoli
-        const menuQuery = query(collection(db, 'menu'), orderBy('createdAt', 'asc'))
-        const menuSnapshot = await getDocs(menuQuery)
-        const items = []
-        menuSnapshot.forEach((doc) => {
-          items.push({ id: doc.id, ...doc.data() })
-        })
-        setMenuItems(items)
+    // Sottoscrizione ai prodotti singoli
+    const menuQuery = query(collection(db, 'menu'), orderBy('createdAt', 'asc'))
+    const unsubscribeMenu = onSnapshot(menuQuery, (snapshot) => {
+      const items = []
+      snapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() })
+      })
+      setMenuItems(items)
+    })
 
-        // Carica menu compositi
-        const compositiQuery = query(collection(db, 'menuCompositi'), orderBy('createdAt', 'asc'))
-        const compositiSnapshot = await getDocs(compositiQuery)
-        const compositi = []
-        compositiSnapshot.forEach((doc) => {
-          compositi.push({ id: doc.id, ...doc.data() })
-        })
-        setMenuCompositi(compositi)
-      } catch (error) {
-        console.error('Errore nel caricamento del menu:', error)
-      }
+    // Sottoscrizione ai menu compositi
+    const compositiQuery = query(collection(db, 'menuCompositi'), orderBy('createdAt', 'asc'))
+    const unsubscribeCompositi = onSnapshot(compositiQuery, (snapshot) => {
+      const compositi = []
+      snapshot.forEach((doc) => {
+        compositi.push({ id: doc.id, ...doc.data() })
+      })
+      setMenuCompositi(compositi)
+    })
+
+    // Cleanup delle sottoscrizioni
+    return () => {
+      unsubscribeMenu()
+      unsubscribeCompositi()
     }
-
-    loadMenu()
   }, [])
 
   // Carica l'ultimo numero d'ordine
@@ -159,6 +159,12 @@ const Cassa = () => {
       // Salva l'ordine nel database
       await addDoc(collection(db, 'ordini'), confirmedOrder)
 
+      // Aggiorna le quantità dei piatti ordinati
+      await updateProductQuantities(confirmedOrder.items)
+
+      // Non serve più aggiornare le quantità locali qui perché si aggiornano graficamente
+      // Le quantità reali vengono aggiornate dal database tramite onSnapshot
+
       // Reset dell'ordine e incrementa il numero
       setCurrentOrder([])
       setOrderNumber(prev => prev + 1)
@@ -171,6 +177,181 @@ const Cassa = () => {
     } catch (error) {
       console.error('Errore nel salvataggio dell\'ordine:', error)
       alert('Errore nel salvataggio dell\'ordine')
+    }
+  }
+
+  // Funzione per aggiornare le quantità dei prodotti ordinati
+  const updateProductQuantities = async (orderItems) => {
+    try {
+      const updatePromises = orderItems.map(async (item) => {
+        if (item.category === 'composito') {
+          // Per i menu compositi, diminuisci le quantità di tutti i piatti componenti
+          await updateMenuCompositoQuantities(item.id, item.quantity)
+        } else {
+          // Per i piatti singoli, diminuisci direttamente la quantità
+          const productRef = doc(db, 'menu', item.id)
+          
+          // Usa increment per diminuire la quantità in modo atomico
+          await updateDoc(productRef, {
+            quantity: increment(-item.quantity)
+          })
+
+          console.log(`Aggiornata quantità per ${item.name}: -${item.quantity}`)
+
+          // Aggiorna anche i menu compositi che contengono questo piatto
+          await updateMenuCompositiForProduct(item.id, item.quantity)
+        }
+      })
+
+      // Esegui tutti gli aggiornamenti in parallelo
+      await Promise.all(updatePromises)
+      
+      console.log('Tutte le quantità dei prodotti sono state aggiornate')
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento delle quantità dei prodotti:', error)
+      // Non blocchiamo il salvataggio dell'ordine se fallisce l'aggiornamento delle quantità
+    }
+  }
+
+  // Funzione per aggiornare immediatamente le quantità locali
+  const updateLocalQuantities = (orderItems) => {
+    orderItems.forEach((orderItem) => {
+      if (orderItem.category === 'composito') {
+        // Per i menu compositi, aggiorna le quantità di tutti i piatti componenti
+        const menuComposito = menuCompositi.find(menu => menu.id === orderItem.id)
+        
+        if (menuComposito && menuComposito.items) {
+          menuComposito.items.forEach((itemId) => {
+            const productIndex = menuItems.findIndex(item => item.id === itemId)
+            if (productIndex !== -1) {
+              // Aggiorna la quantità locale
+              setMenuItems(prev => prev.map((item, index) => 
+                index === productIndex 
+                  ? { ...item, quantity: Math.max(0, item.quantity - orderItem.quantity) }
+                  : item
+              ))
+            }
+          })
+
+          // Aggiorna anche la minQuantity del menu composito locale
+          updateLocalMenuCompositiQuantities(orderItem.id, orderItem.quantity)
+        }
+      } else {
+        // Per i piatti singoli, aggiorna direttamente la quantità
+        setMenuItems(prev => prev.map(item => 
+          item.id === orderItem.id 
+            ? { ...item, quantity: Math.max(0, item.quantity - orderItem.quantity) }
+            : item
+        ))
+
+        // Aggiorna anche i menu compositi locali che contengono questo piatto
+        updateLocalMenuCompositiForProduct(orderItem.id, orderItem.quantity)
+      }
+    })
+
+    console.log('Quantità locali aggiornate per feedback istantaneo')
+  }
+
+  // Funzione per aggiornare i menu compositi quando si vende un piatto singolo
+  const updateMenuCompositiForProduct = async (productId, soldQuantity) => {
+    try {
+      // Trova tutti i menu compositi che contengono questo piatto
+      const menuCompositiRef = collection(db, 'menuCompositi')
+      const q = query(menuCompositiRef, where('items', 'array-contains', productId))
+      const querySnapshot = await getDocs(q)
+
+      // Aggiorna ogni menu composito trovato
+      const updatePromises = querySnapshot.docs.map(async (docSnapshot) => {
+        const menuData = docSnapshot.data()
+        
+        // Ricalcola la quantità disponibile del menu
+        const minQuantity = Math.min(...menuData.items.map(itemId => {
+          if (itemId === productId) {
+            // Per il piatto appena venduto, usa la quantità aggiornata
+            const existingProduct = menuItems.find(i => i.id === itemId)
+            return existingProduct ? Math.max(0, existingProduct.quantity - soldQuantity) : 0
+          }
+          // Per gli altri piatti, usa la quantità attuale
+          const existingItem = menuItems.find(i => i.id === itemId)
+          return existingItem ? existingItem.quantity : 0
+        }))
+
+        // Aggiorna il menu composito con la nuova quantità minima
+        return updateDoc(doc(db, 'menuCompositi', docSnapshot.id), {
+          minQuantity: minQuantity,
+          updatedAt: new Date()
+        })
+      })
+
+      // Esegui tutti gli aggiornamenti in parallelo
+      await Promise.all(updatePromises)
+
+      console.log(`Aggiornati ${updatePromises.length} menu compositi per il piatto ${productId}`)
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento dei menu compositi per il piatto:', error)
+    }
+  }
+
+  // Funzione per aggiornare localmente la minQuantity di un menu composito
+  const updateLocalMenuCompositiQuantities = (menuId, orderQuantity) => {
+    setMenuCompositi(prev => prev.map(menu => {
+      if (menu.id === menuId) {
+        // Ricalcola la minQuantity locale
+        const newMinQuantity = Math.max(0, menu.minQuantity - orderQuantity)
+        return { ...menu, minQuantity: newMinQuantity }
+      }
+      return menu
+    }))
+  }
+
+  // Funzione per aggiornare localmente i menu compositi che contengono un piatto venduto
+  const updateLocalMenuCompositiForProduct = (productId, soldQuantity) => {
+    setMenuCompositi(prev => prev.map(menu => {
+      if (menu.items.includes(productId)) {
+        // Ricalcola la minQuantity locale per questo menu
+        const newMinQuantity = Math.min(...menu.items.map(itemId => {
+          if (itemId === productId) {
+            // Per il piatto appena venduto, usa la quantità aggiornata
+            const existingProduct = menuItems.find(i => i.id === itemId)
+            return existingProduct ? Math.max(0, existingProduct.quantity - soldQuantity) : 0
+          }
+          // Per gli altri piatti, usa la quantità attuale
+          const existingItem = menuItems.find(i => i.id === itemId)
+          return existingItem ? existingItem.quantity : 0
+        }))
+        return { ...menu, minQuantity: newMinQuantity }
+      }
+      return menu
+    }))
+  }
+
+  // Funzione per aggiornare le quantità dei piatti di un menu composito
+  const updateMenuCompositoQuantities = async (menuId, orderQuantity) => {
+    try {
+      // Trova il menu composito nel database
+      const menuRef = doc(db, 'menuCompositi', menuId)
+      
+      // Per ora, assumiamo che ogni menu composito richieda 1 di ogni piatto
+      // In futuro potremmo voler specificare le quantità per ogni piatto nel menu
+      const menuComposito = menuCompositi.find(menu => menu.id === menuId)
+      
+      if (menuComposito && menuComposito.items) {
+        // Diminuisci la quantità di ogni piatto del menu
+        const updatePromises = menuComposito.items.map(async (itemId) => {
+          const productRef = doc(db, 'menu', itemId)
+          
+          // Diminuisci di orderQuantity per ogni piatto del menu
+          await updateDoc(productRef, {
+            quantity: increment(-orderQuantity)
+          })
+
+          console.log(`Aggiornata quantità per piatto del menu ${menuComposito.name}: -${orderQuantity}`)
+        })
+
+        await Promise.all(updatePromises)
+      }
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento delle quantità del menu composito:', error)
     }
   }
 
@@ -199,6 +380,65 @@ const Cassa = () => {
     compositi: menuCompositi.map(menu => ({ ...menu, category: 'composito' })),
     cibo: menuItems.filter(item => item.category === 'cibo'),
     bevande: menuItems.filter(item => item.category === 'bevande')
+  }
+
+  // Funzione per calcolare la quantità disponibile durante la costruzione dell'ordine
+  const getAvailableQuantity = (item) => {
+    if (item.category === 'composito') {
+      // Per i menu compositi, calcola la quantità minima disponibile
+      const menuComposito = menuCompositi.find(menu => menu.id === item.id)
+      if (menuComposito && menuComposito.items) {
+        const minQuantity = Math.min(...menuComposito.items.map(itemId => {
+          const product = menuItems.find(i => i.id === itemId)
+          if (product) {
+            // Sottrai la quantità già ordinata per questo piatto singolo
+            const orderedQuantity = currentOrder.reduce((total, orderItem) => {
+              if (orderItem.id === itemId) {
+                return total + orderItem.quantity
+              }
+              return total
+            }, 0)
+            
+            // Sottrai anche la quantità dei menu compositi che contengono questo piatto
+            const menuOrderedQuantity = currentOrder.reduce((total, orderItem) => {
+              if (orderItem.category === 'composito') {
+                const menu = menuCompositi.find(m => m.id === orderItem.id)
+                if (menu && menu.items.includes(itemId)) {
+                  return total + orderItem.quantity
+                }
+              }
+              return total
+            }, 0)
+            
+            return Math.max(0, product.quantity - orderedQuantity - menuOrderedQuantity)
+          }
+          return 0
+        }))
+        return minQuantity
+      }
+      return item.minQuantity || 0
+    } else {
+      // Per i piatti singoli, sottrai la quantità già ordinata
+      const orderedQuantity = currentOrder.reduce((total, orderItem) => {
+        if (orderItem.id === item.id) {
+          return total + orderItem.quantity
+        }
+        return total
+      }, 0)
+      
+      // Sottrai anche la quantità dei menu compositi che contengono questo piatto
+      const menuOrderedQuantity = currentOrder.reduce((total, orderItem) => {
+        if (orderItem.category === 'composito') {
+          const menu = menuCompositi.find(m => m.id === orderItem.id)
+          if (menu && menu.items.includes(item.id)) {
+            return total + orderItem.quantity
+          }
+        }
+        return total
+      }, 0)
+      
+      return Math.max(0, (item.quantity || 0) - orderedQuantity - menuOrderedQuantity)
+    }
   }
 
   // Raggruppa gli item dell'ordine per nome e categoria, mantenendo l'ordine
@@ -234,19 +474,28 @@ const Cassa = () => {
           <div className="category-section">
             <h3>🍽️ Menu Compositi</h3>
             <div className="products-grid">
-              {groupedItems.compositi.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => addToOrder(item)}
-                  className="product-button"
-                >
-                  <div className="product-name">{item.name}</div>
-                  <div className="product-info-row">
-                    <div className="product-quantity">{item.minQuantity || 0}</div>
-                    <div className="product-price">€{item.price.toFixed(2)}</div>
-                  </div>
-                </button>
-              ))}
+              {groupedItems.compositi.map(item => {
+                const availableQuantity = getAvailableQuantity(item);
+                const isSoldOut = availableQuantity <= 0;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={isSoldOut ? undefined : () => addToOrder(item)}
+                    className={`product-button ${isSoldOut ? 'sold-out' : ''}`}
+                    disabled={isSoldOut}
+                  >
+                    <div className="product-name">{item.name}</div>
+                    <div className="product-info-row">
+                      <div className="product-quantity">{availableQuantity}</div>
+                      {isSoldOut ? (
+                        <div className="sold-out-price">Sold Out</div>
+                      ) : (
+                        <div className="product-price">€{item.price.toFixed(2)}</div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -254,19 +503,28 @@ const Cassa = () => {
           <div className="category-section">
             <h3>🍽️ Cibi</h3>
             <div className="products-grid">
-              {groupedItems.cibo.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => addToOrder(item)}
-                  className="product-button"
-                >
-                  <div className="product-name">{item.name}</div>
-                  <div className="product-info-row">
-                    <div className="product-quantity">{item.quantity || 0}</div>
-                    <div className="product-price">€{item.price.toFixed(2)}</div>
-                  </div>
-                </button>
-              ))}
+              {groupedItems.cibo.map(item => {
+                const availableQuantity = getAvailableQuantity(item);
+                const isSoldOut = availableQuantity <= 0;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={isSoldOut ? undefined : () => addToOrder(item)}
+                    className={`product-button ${isSoldOut ? 'sold-out' : ''}`}
+                    disabled={isSoldOut}
+                  >
+                    <div className="product-name">{item.name}</div>
+                    <div className="product-info-row">
+                      <div className="product-quantity">{availableQuantity}</div>
+                      {isSoldOut ? (
+                        <div className="sold-out-price">Sold Out</div>
+                      ) : (
+                        <div className="product-price">€{item.price.toFixed(2)}</div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -274,19 +532,28 @@ const Cassa = () => {
           <div className="category-section">
             <h3>🥤 Bevande</h3>
             <div className="products-grid">
-              {groupedItems.bevande.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => addToOrder(item)}
-                  className="product-button"
-                >
-                  <div className="product-name">{item.name}</div>
-                  <div className="product-info-row">
-                    <div className="product-quantity">{item.quantity || 0}</div>
-                    <div className="product-price">€{item.price.toFixed(2)}</div>
-                  </div>
-                </button>
-              ))}
+              {groupedItems.bevande.map(item => {
+                const availableQuantity = getAvailableQuantity(item);
+                const isSoldOut = availableQuantity <= 0;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={isSoldOut ? undefined : () => addToOrder(item)}
+                    className={`product-button ${isSoldOut ? 'sold-out' : ''}`}
+                    disabled={isSoldOut}
+                  >
+                    <div className="product-name">{item.name}</div>
+                    <div className="product-info-row">
+                      <div className="product-quantity">{availableQuantity}</div>
+                      {isSoldOut ? (
+                        <div className="sold-out-price">Sold Out</div>
+                      ) : (
+                        <div className="product-price">€{item.price.toFixed(2)}</div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

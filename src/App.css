@@ -993,6 +993,41 @@ body {
   transform: translateY(0);
 }
 
+/* Stili per prodotti sold out */
+.product-button.sold-out {
+  background-color: #f8d7da;
+  border-color: #dc3545;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.product-button.sold-out:hover {
+  background-color: #f8d7da;
+  border-color: #dc3545;
+  transform: none;
+  box-shadow: none;
+}
+
+.product-button.sold-out .product-name {
+  color: #721c24;
+}
+
+.product-button.sold-out .product-price {
+  color: #721c24;
+}
+
+.product-button.sold-out .product-quantity {
+  color: #721c24;
+}
+
+.sold-out-price {
+  color: #dc3545;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .product-name {
   font-weight: 600;
   color: #2c3e50;

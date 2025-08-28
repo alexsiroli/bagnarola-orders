@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, where, getDocs } from 'firebase/firestore'
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([])
@@ -43,13 +43,16 @@ const Menu = () => {
     }
 
     try {
-      await addDoc(collection(db, 'menu'), {
+      const docRef = await addDoc(collection(db, 'menu'), {
         name: newItem.name,
         price: parseFloat(newItem.price),
         quantity: parseInt(newItem.quantity),
         category: category,
         createdAt: new Date()
       })
+      
+      // Aggiorna i menu compositi che potrebbero contenere questo piatto
+      // (per ora non aggiorniamo perché è un nuovo piatto, ma potremmo volerlo fare in futuro)
       
       // Reset del form
       newItem.name = ''
@@ -93,15 +96,58 @@ const Menu = () => {
 
   const handleEditItem = async (item) => {
     try {
+      // Aggiorna il piatto
       await updateDoc(doc(db, 'menu', item.id), {
         name: item.name,
         price: parseFloat(item.price),
         quantity: parseInt(item.quantity)
       })
+
+      // Aggiorna automaticamente tutti i menu compositi che contengono questo piatto
+      await updateMenuCompositiQuantities(item.id, parseInt(item.quantity))
+
       setEditingItem(null)
     } catch (error) {
       console.error('Errore nell\'aggiornamento del piatto:', error)
       alert('Errore nell\'aggiornamento del piatto')
+    }
+  }
+
+  // Funzione per aggiornare le quantità dei menu compositi
+  const updateMenuCompositiQuantities = async (updatedItemId, newQuantity) => {
+    try {
+      // Trova tutti i menu compositi che contengono il piatto aggiornato
+      const menuCompositiRef = collection(db, 'menuCompositi')
+      const q = query(menuCompositiRef, where('items', 'array-contains', updatedItemId))
+      const querySnapshot = await getDocs(q)
+
+      // Aggiorna ogni menu composito trovato
+      const updatePromises = querySnapshot.docs.map(async (docSnapshot) => {
+        const menuData = docSnapshot.data()
+        
+        // Ricalcola la quantità disponibile del menu
+        const minQuantity = Math.min(...menuData.items.map(itemId => {
+          if (itemId === updatedItemId) {
+            return newQuantity // Usa la nuova quantità per il piatto aggiornato
+          }
+          // Trova la quantità attuale del piatto nel menu
+          const existingItem = menuItems.find(i => i.id === itemId)
+          return existingItem ? existingItem.quantity : 0
+        }))
+
+        // Aggiorna il menu composito con la nuova quantità minima
+        return updateDoc(doc(db, 'menuCompositi', docSnapshot.id), {
+          minQuantity: minQuantity,
+          updatedAt: new Date()
+        })
+      })
+
+      // Esegui tutti gli aggiornamenti in parallelo
+      await Promise.all(updatePromises)
+
+      console.log(`Aggiornati ${updatePromises.length} menu compositi per il piatto ${updatedItemId}`)
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento dei menu compositi:', error)
     }
   }
 
@@ -127,8 +173,12 @@ const Menu = () => {
   }
 
   const handleDeleteItem = async (itemId) => {
-    if (confirm('Sei sicuro di voler eliminare questo piatto?')) {
+    if (confirm('Sei sicuro di voler eliminare questo piatto? Questo potrebbe influenzare i menu compositi che lo contengono.')) {
       try {
+        // Prima aggiorna tutti i menu compositi che contengono questo piatto
+        await updateMenuCompositiQuantities(itemId, 0)
+        
+        // Poi elimina il piatto
         await deleteDoc(doc(db, 'menu', itemId))
       } catch (error) {
         console.error('Errore nell\'eliminazione del piatto:', error)
