@@ -912,46 +912,19 @@ body {
   font-size: 2rem;
 }
 
-.order-info {
+.last-order-info {
   display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.order-number, .order-total {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 0.5rem;
 }
 
-.order-number .label, .order-total .label {
+.last-order-info .label {
   font-size: 0.9rem;
   color: #7f8c8d;
   font-weight: 500;
 }
 
-.order-number .number {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #3498db;
-  background-color: #ecf0f1;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  min-width: 80px;
-  text-align: center;
-}
 
-.order-total .total {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #27ae60;
-  background-color: #e8f5e8;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  min-width: 120px;
-  text-align: center;
-}
 
 .cassa-content {
   display: grid;
@@ -1090,18 +1063,22 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  width: 100%;
 }
 
 .item-name {
   font-weight: 600;
   color: #2c3e50;
   font-size: 0.9rem;
+  flex: 1;
 }
 
 .item-price {
   color: #27ae60;
   font-weight: 500;
   font-size: 0.8rem;
+  text-align: right;
+  min-width: 60px;
 }
 
 .item-controls {
@@ -1166,9 +1143,33 @@ body {
   background-color: #c0392b;
 }
 
+/* Separatori tra categorie nel riepilogo ordine */
+.category-separator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.5rem 0;
+  padding: 0 0.5rem;
+}
+
+.separator-line {
+  flex: 1;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.separator-text {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0 0.5rem;
+}
+
 .order-actions {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: auto;
   flex-shrink: 0;
 }
@@ -1206,6 +1207,88 @@ body {
   cursor: not-allowed;
 }
 
+/* Stili per il riepilogo ordine confermato */
+.order-confirmation {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.confirmed-order-items {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.confirmed-order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid #ecf0f1;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.confirmed-order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #e8f5e8;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 2px solid #27ae60;
+}
+
+.total-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.total-amount {
+  font-weight: bold;
+  color: #27ae60;
+  font-size: 1.3rem;
+}
+
+.order-confirmation-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.cancel-order-btn, .save-order-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.cancel-order-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.cancel-order-btn:hover {
+  background-color: #c0392b;
+}
+
+.save-order-btn {
+  background-color: #27ae60;
+  color: white;
+}
+
+.save-order-btn:hover {
+  background-color: #229954;
+}
+
 /* Responsive design per la cassa */
 @media (max-width: 1024px) {
   .cassa-content {
@@ -1225,16 +1308,13 @@ body {
     text-align: center;
   }
   
-  .order-info {
-    flex-direction: column;
-    gap: 1rem;
+  .last-order-info {
+    justify-content: center;
   }
   
   .products-grid {
     grid-template-columns: 1fr;
   }
   
-  .order-actions {
-    flex-direction: column;
-  }
+
 }
