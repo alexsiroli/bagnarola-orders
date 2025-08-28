@@ -82,10 +82,8 @@ const Cassa = () => {
         if (!ordersSnapshot.empty) {
           const lastOrder = ordersSnapshot.docs[0].data()
           setLastOrderNumber(lastOrder.orderNumber)
-          setOrderNumber(lastOrder.orderNumber + 1)
         } else {
           setLastOrderNumber(0)
-          setOrderNumber(1)
         }
       } catch (error) {
         console.error('Errore nel caricamento del numero ordine:', error)
@@ -105,7 +103,6 @@ const Cassa = () => {
         // Aggiorna solo se il numero è diverso (evita loop infiniti)
         if (newLastOrderNumber !== lastOrderNumber) {
           setLastOrderNumber(newLastOrderNumber)
-          setOrderNumber(newLastOrderNumber + 1)
           console.log(`Nuovo ordine rilevato: #${newLastOrderNumber}`)
         }
       }
@@ -184,26 +181,41 @@ const Cassa = () => {
       return
     }
 
-    // Prepara i dati dell'ordine
-    const orderData = {
-      orderNumber: orderNumber,
-      items: currentOrder.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        category: item.category
-      })),
-      total: total,
-      status: 'in_preparazione', // Stato dell'ordine
-      statusCode: 0, // Codice numerico per lo stato
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
+    try {
+      // Controlla l'ultimo ordine sul database nel momento della conferma
+      const ordersQuery = query(collection(db, 'ordini'), orderBy('orderNumber', 'desc'))
+      const ordersSnapshot = await getDocs(ordersQuery)
+      
+      let newOrderNumber = 1
+      if (!ordersSnapshot.empty) {
+        const lastOrder = ordersSnapshot.docs[0].data()
+        newOrderNumber = lastOrder.orderNumber + 1
+      }
 
-    // Mostra il riepilogo dell'ordine
-    setConfirmedOrder(orderData)
-    setShowOrderSummary(true)
+      // Prepara i dati dell'ordine
+      const orderData = {
+        orderNumber: newOrderNumber,
+        items: currentOrder.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          category: item.category
+        })),
+        total: total,
+        status: 'in_preparazione', // Stato dell'ordine
+        statusCode: 0, // Codice numerico per lo stato
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      // Mostra il riepilogo dell'ordine
+      setConfirmedOrder(orderData)
+      setShowOrderSummary(true)
+    } catch (error) {
+      console.error('Errore nel controllo del numero ordine:', error)
+      alert('Errore nel controllo del numero ordine')
+    }
   }
 
   // Salva effettivamente l'ordine nel database
@@ -218,9 +230,8 @@ const Cassa = () => {
       // Non serve più aggiornare le quantità locali qui perché si aggiornano graficamente
       // Le quantità reali vengono aggiornate dal database tramite onSnapshot
 
-      // Reset dell'ordine e incrementa il numero
+      // Reset dell'ordine
       setCurrentOrder([])
-      setOrderNumber(prev => prev + 1)
       setTotal(0)
       setLastOrderNumber(confirmedOrder.orderNumber)
       setShowOrderSummary(false)
