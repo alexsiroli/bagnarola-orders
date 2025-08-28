@@ -34,14 +34,45 @@ const Cassa = () => {
       setMenuCompositi(compositi)
     })
 
+    // Listener specifico per aggiornamenti delle quantità in tempo reale
+    const quantitiesQuery = query(collection(db, 'menu'))
+    const unsubscribeQuantities = onSnapshot(quantitiesQuery, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const updatedItem = { id: change.doc.id, ...change.doc.data() }
+          
+          // Aggiorna solo la quantità dell'item modificato
+          setMenuItems(prev => prev.map(item => 
+            item.id === updatedItem.id 
+              ? { ...item, quantity: updatedItem.quantity }
+              : item
+          ))
+
+          // Aggiorna anche i menu compositi che contengono questo piatto
+          setMenuCompositi(prev => prev.map(menu => {
+            if (menu.items && menu.items.includes(updatedItem.id)) {
+              // Ricalcola la minQuantity per questo menu composito
+              const newMinQuantity = Math.min(...menu.items.map(itemId => {
+                const product = menuItems.find(i => i.id === itemId)
+                return product ? product.quantity : 0
+              }))
+              return { ...menu, minQuantity: newMinQuantity }
+            }
+            return menu
+          }))
+        }
+      })
+    })
+
     // Cleanup delle sottoscrizioni
     return () => {
       unsubscribeMenu()
       unsubscribeCompositi()
+      unsubscribeQuantities()
     }
   }, [])
 
-  // Carica l'ultimo numero d'ordine
+  // Carica l'ultimo numero d'ordine e mantiene aggiornato in tempo reale
   useEffect(() => {
     const loadLastOrderNumber = async () => {
       try {
@@ -61,8 +92,30 @@ const Cassa = () => {
       }
     }
 
+    // Carica inizialmente
     loadLastOrderNumber()
-  }, [])
+
+    // Listener in tempo reale per l'ultimo numero d'ordine
+    const ordersQuery = query(collection(db, 'ordini'), orderBy('orderNumber', 'desc'))
+    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        const lastOrder = snapshot.docs[0].data()
+        const newLastOrderNumber = lastOrder.orderNumber
+        
+        // Aggiorna solo se il numero è diverso (evita loop infiniti)
+        if (newLastOrderNumber !== lastOrderNumber) {
+          setLastOrderNumber(newLastOrderNumber)
+          setOrderNumber(newLastOrderNumber + 1)
+          console.log(`Nuovo ordine rilevato: #${newLastOrderNumber}`)
+        }
+      }
+    })
+
+    // Cleanup del listener
+    return () => {
+      unsubscribeOrders()
+    }
+  }, [lastOrderNumber])
 
   // Calcola il totale quando cambia l'ordine
   useEffect(() => {
