@@ -4,6 +4,7 @@ import { auth } from './firebase'
 import Auth from './components/Auth'
 import Menu from './components/Menu'
 import Cassa from './components/Cassa'
+import Orders from './components/Orders'
 import './App.css'
 
 function App() {
@@ -25,7 +26,7 @@ function App() {
       case 'cucina':
         return <div className="section-content">Pagina Cucina - Visualizzazione ordini in preparazione</div>
       case 'ordini':
-        return <div className="section-content">Pagina Ordini - Gestione e tracciamento ordini</div>
+        return <Orders />
       case 'menu':
         return <Menu />
       case 'impostazioni':

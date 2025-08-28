@@ -4,7 +4,7 @@ import { collection, addDoc, onSnapshot, query, orderBy, getDocs, updateDoc, doc
 
 const Cassa = () => {
   const [menuItems, setMenuItems] = useState([])
-  const [menuCompositi] = useState([])
+  const [menuCompositi, setMenuCompositi] = useState([])
   const [currentOrder, setCurrentOrder] = useState([])
   const [lastOrderNumber, setLastOrderNumber] = useState(0)
   const [total, setTotal] = useState(0)
@@ -173,15 +173,38 @@ const Cassa = () => {
     setCurrentOrder(prev => prev.filter(item => !(item.name === itemName && item.category === itemCategory)))
   }
 
-  // Conferma l'ordine e mostra il riepilogo
-  const confirmOrder = async () => {
+  // Mostra il riepilogo ordine (senza numero d'ordine che sarà assegnato solo dopo la conferma)
+  const confirmOrder = () => {
     if (currentOrder.length === 0) {
       alert('Aggiungi almeno un prodotto all\'ordine')
       return
     }
 
+    // Prepara i dati dell'ordine senza il numero (verrà assegnato al momento del salvataggio)
+    const orderData = {
+      items: currentOrder.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        category: item.category
+      })),
+      total: total,
+      status: 'in_preparazione', // Stato dell'ordine
+      statusCode: 0, // Codice numerico per lo stato
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    // Mostra il riepilogo dell'ordine (senza mostrare ancora il numero)
+    setConfirmedOrder(orderData)
+    setShowOrderSummary(true)
+  }
+
+  // Salva effettivamente l'ordine nel database e assegna il numero d'ordine
+  const saveOrder = async () => {
     try {
-      // Controlla l'ultimo ordine sul database nel momento della conferma
+      // Controlla l'ultimo ordine sul database nel momento del salvataggio
       const ordersQuery = query(collection(db, 'ordini'), orderBy('orderNumber', 'desc'))
       const ordersSnapshot = await getDocs(ordersQuery)
       
@@ -191,40 +214,17 @@ const Cassa = () => {
         newOrderNumber = lastOrder.orderNumber + 1
       }
 
-      // Prepara i dati dell'ordine
-      const orderData = {
-        orderNumber: newOrderNumber,
-        items: currentOrder.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          category: item.category
-        })),
-        total: total,
-        status: 'in_preparazione', // Stato dell'ordine
-        statusCode: 0, // Codice numerico per lo stato
-        createdAt: new Date(),
-        updatedAt: new Date()
+      // Aggiungi il numero dell'ordine ai dati dell'ordine
+      const finalOrderData = {
+        ...confirmedOrder,
+        orderNumber: newOrderNumber
       }
 
-      // Mostra il riepilogo dell'ordine
-      setConfirmedOrder(orderData)
-      setShowOrderSummary(true)
-    } catch (error) {
-      console.error('Errore nel controllo del numero ordine:', error)
-      alert('Errore nel controllo del numero ordine')
-    }
-  }
-
-  // Salva effettivamente l'ordine nel database
-  const saveOrder = async () => {
-    try {
       // Salva l'ordine nel database
-      await addDoc(collection(db, 'ordini'), confirmedOrder)
+      await addDoc(collection(db, 'ordini'), finalOrderData)
 
       // Aggiorna le quantità dei piatti ordinati
-      await updateProductQuantities(confirmedOrder.items)
+      await updateProductQuantities(finalOrderData.items)
 
       // Non serve più aggiornare le quantità locali qui perché si aggiornano graficamente
       // Le quantità reali vengono aggiornate dal database tramite onSnapshot
@@ -232,11 +232,15 @@ const Cassa = () => {
       // Reset dell'ordine
       setCurrentOrder([])
       setTotal(0)
-      setLastOrderNumber(confirmedOrder.orderNumber)
+      setLastOrderNumber(newOrderNumber)
       setShowOrderSummary(false)
       setConfirmedOrder(null)
 
-      alert(`Ordine #${confirmedOrder.orderNumber} confermato e salvato!`)
+      // Log del numero dell'ordine creato
+      console.log(`🆕 Nuovo ordine creato: #${newOrderNumber}`)
+
+      // Mostra il popup con il numero dell'ordine solo DOPO la conferma finale
+      alert(`Ordine #${newOrderNumber} confermato e salvato!`)
     } catch (error) {
       console.error('Errore nel salvataggio dell\'ordine:', error)
       alert('Errore nel salvataggio dell\'ordine')
@@ -627,9 +631,6 @@ const Cassa = () => {
             // Riepilogo ordine confermato
             <div className="order-confirmation">
               <h3>📋 Riepilogo Ordine</h3>
-              <div className="order-number-display">
-                <span className="order-number-label">Ordine #{confirmedOrder.orderNumber}</span>
-              </div>
               
               <div className="confirmed-order-items">
                 {confirmedOrder.items
