@@ -3,6 +3,7 @@ import { useUser } from './hooks/useUser'
 import { auth } from './firebase'
 import Auth from './components/Auth'
 import Menu from './components/Menu'
+import Cassa from './components/Cassa'
 import './App.css'
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
   const renderSection = () => {
     switch (currentSection) {
       case 'cassa':
-        return <div className="section-content">Pagina Cassa - Gestione pagamenti e chiusura cassa</div>
+        return <Cassa />
       case 'cucina':
         return <div className="section-content">Pagina Cucina - Visualizzazione ordini in preparazione</div>
       case 'ordini':
