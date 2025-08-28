@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUser } from './hooks/useUser'
 import { auth } from './firebase'
 import Auth from './components/Auth'
+import Menu from './components/Menu'
 import './App.css'
 
 function App() {
@@ -25,7 +26,7 @@ function App() {
       case 'ordini':
         return <div className="section-content">Pagina Ordini - Gestione e tracciamento ordini</div>
       case 'menu':
-        return <div className="section-content">Pagina Menu - Gestione piatti e prezzi</div>
+        return <Menu />
       case 'impostazioni':
         return <div className="section-content">Pagina Impostazioni - Configurazione sistema</div>
       default:
