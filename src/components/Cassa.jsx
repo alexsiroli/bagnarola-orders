@@ -241,7 +241,10 @@ const Cassa = () => {
                   className="product-button"
                 >
                   <div className="product-name">{item.name}</div>
-                  <div className="product-price">€{item.price.toFixed(2)}</div>
+                  <div className="product-info-row">
+                    <div className="product-quantity">{item.minQuantity || 0}</div>
+                    <div className="product-price">€{item.price.toFixed(2)}</div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -258,7 +261,10 @@ const Cassa = () => {
                   className="product-button"
                 >
                   <div className="product-name">{item.name}</div>
-                  <div className="product-price">€{item.price.toFixed(2)}</div>
+                  <div className="product-info-row">
+                    <div className="product-quantity">{item.quantity || 0}</div>
+                    <div className="product-price">€{item.price.toFixed(2)}</div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -275,7 +281,10 @@ const Cassa = () => {
                   className="product-button"
                 >
                   <div className="product-name">{item.name}</div>
-                  <div className="product-price">€{item.price.toFixed(2)}</div>
+                  <div className="product-info-row">
+                    <div className="product-quantity">{item.quantity || 0}</div>
+                    <div className="product-price">€{item.price.toFixed(2)}</div>
+                  </div>
                 </button>
               ))}
             </div>
