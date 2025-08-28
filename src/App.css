@@ -368,7 +368,7 @@ body {
 
 .menu-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 2fr 1fr;
   gap: 0.75rem;
   padding: 0.75rem;
   background-color: #f8f9fa;
@@ -387,7 +387,7 @@ body {
 
 .menu-item {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 2fr 1fr;
   gap: 0.75rem;
   padding: 0.75rem;
   border-bottom: 1px solid #f0f0f0;
@@ -429,6 +429,18 @@ body {
   display: flex;
   gap: 0.4rem;
   justify-content: center;
+}
+
+.item-composition {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.2;
+  max-height: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .edit-btn, .delete-btn {
@@ -478,6 +490,22 @@ body {
   outline: none;
   border-color: #3498db;
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Select multipli per menu compositi */
+.edit-select[multiple], .add-input[multiple] {
+  min-height: 80px;
+  max-height: 120px;
+}
+
+.edit-select option, .add-input option {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.edit-select option:checked, .add-input option:checked {
+  background-color: #3498db;
+  color: white;
 }
 
 .edit-actions {
@@ -569,6 +597,11 @@ body {
     grid-template-columns: 1fr;
     gap: 0.5rem;
     text-align: center;
+  }
+
+  .item-composition {
+    max-height: none;
+    -webkit-line-clamp: unset;
   }
 
   .menu-header span {
