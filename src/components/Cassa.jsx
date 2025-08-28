@@ -4,9 +4,8 @@ import { collection, addDoc, onSnapshot, query, orderBy, getDocs, updateDoc, doc
 
 const Cassa = () => {
   const [menuItems, setMenuItems] = useState([])
-  const [menuCompositi, setMenuCompositi] = useState([])
+  const [menuCompositi] = useState([])
   const [currentOrder, setCurrentOrder] = useState([])
-  const [orderNumber, setOrderNumber] = useState(1)
   const [lastOrderNumber, setLastOrderNumber] = useState(0)
   const [total, setTotal] = useState(0)
   const [showOrderSummary, setShowOrderSummary] = useState(false)
