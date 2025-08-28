@@ -416,6 +416,7 @@ body {
 .item-price {
   font-weight: 600;
   color: #27ae60;
+  font-size: 1.1rem;
 }
 
 .item-quantity {
@@ -1127,7 +1128,7 @@ body {
 .item-price {
   color: #27ae60;
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   text-align: right;
   min-width: 60px;
 }
@@ -1256,6 +1257,40 @@ body {
 .confirm-order-btn:disabled {
   background-color: #bdc3c7;
   cursor: not-allowed;
+}
+
+/* Stili per il contenuto del bottone di conferma ordine */
+.confirm-order-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Stili per il numero dell'ordine nel popup di conferma */
+.order-number-display {
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #e8f5e8;
+  border-radius: 6px;
+  border: 1px solid #27ae60;
+}
+
+.order-number-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.confirm-order-total {
+  font-size: 1.8rem;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  min-width: 100px;
+  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .confirm-btn-content {

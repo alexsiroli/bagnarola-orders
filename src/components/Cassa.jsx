@@ -616,7 +616,10 @@ const Cassa = () => {
           {showOrderSummary ? (
             // Riepilogo ordine confermato
             <div className="order-confirmation">
-              <h3>📋 Riepilogo Ordine #{confirmedOrder.orderNumber}</h3>
+              <h3>📋 Riepilogo Ordine</h3>
+              <div className="order-number-display">
+                <span className="order-number-label">Ordine #{confirmedOrder.orderNumber}</span>
+              </div>
               
               <div className="confirmed-order-items">
                 {confirmedOrder.items
@@ -664,7 +667,7 @@ const Cassa = () => {
                   onClick={saveOrder}
                   className="save-order-btn"
                 >
-                  💾 Salva Ordine
+                  ✅ Conferma Ordine
                 </button>
               </div>
             </div>
@@ -738,7 +741,9 @@ const Cassa = () => {
                       className="confirm-order-btn"
                       disabled={currentOrder.length === 0}
                     >
-                      ✅ Conferma Ordine
+                      <div className="confirm-order-content">
+                        <div className="confirm-order-total">€{total.toFixed(2)}</div>
+                      </div>
                     </button>
                   </div>
                 </>
