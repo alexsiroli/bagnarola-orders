@@ -600,11 +600,11 @@ body {
 
 .dialog-content {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
+  max-width: 450px;
+  max-height: 80vh;
   overflow-y: auto;
 }
 
@@ -612,14 +612,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .dialog-header h3 {
   margin: 0;
   color: #2c3e50;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
 }
 
 .close-dialog-btn {
@@ -643,26 +643,27 @@ body {
 }
 
 .dialog-body {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .dialog-body .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .dialog-body label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   color: #2c3e50;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .dialog-input, .dialog-select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .dialog-input:focus, .dialog-select:focus {
@@ -675,31 +676,31 @@ body {
 .products-selection {
   border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 1rem;
+  padding: 0.75rem;
   background-color: #f8f9fa;
 }
 
 .products-selection.compact {
   padding: 0.5rem;
-  max-height: 200px;
+  max-height: 150px;
   overflow-y: auto;
 }
 
 .products-section h4, .products-section h5 {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.4rem 0;
   color: #2c3e50;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .products-section h5 {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .products-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
 }
 
 .products-list:last-child {
@@ -709,11 +710,13 @@ body {
 .product-checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.1rem;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
+  padding: 0.1rem;
+  border-radius: 3px;
   transition: background-color 0.2s;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .product-checkbox:hover {
@@ -721,19 +724,26 @@ body {
 }
 
 .product-checkbox input[type="checkbox"] {
-  margin: 0;
+  margin: 0 0.3rem 0 0;
   cursor: pointer;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
 }
 
 .product-name {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 0.1rem;
 }
 
 .products-divider {
   height: 1px;
   background-color: #ddd;
-  margin: 1rem 0;
+  margin: 0.75rem 0;
 }
 
 .products-divider + .products-section {
@@ -750,19 +760,19 @@ body {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-top: 1px solid #e0e0e0;
   background-color: #f8f9fa;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 6px 6px;
 }
 
 .cancel-dialog-btn, .create-dialog-btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: background-color 0.2s;
 }
 
@@ -828,6 +838,11 @@ body {
   
   .products-section h4, .products-section h5 {
     font-size: 0.9rem;
+  }
+  
+  .products-list {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
   }
   
   .product-checkbox {
