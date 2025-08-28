@@ -247,21 +247,51 @@ const Menu = () => {
             className="edit-input"
             placeholder="Prezzo"
           />
-          <select
-            multiple
-            value={editingMenu.items}
-            onChange={(e) => {
-              const selectedItems = Array.from(e.target.selectedOptions, option => option.value)
-              setEditingMenu({...editingMenu, items: selectedItems})
-            }}
-            className="edit-select"
-          >
-            {menuItems.map(item => (
-              <option key={item.id} value={item.id}>
-                {item.name} (€{item.price.toFixed(2)})
-              </option>
-            ))}
-          </select>
+          <div className="products-selection compact">
+            <div className="products-section">
+              <h5>🍽️ Cibi</h5>
+              <div className="products-list">
+                {filteredItems('cibo').map(item => (
+                  <label key={item.id} className="product-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={editingMenu.items.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setEditingMenu({...editingMenu, items: [...editingMenu.items, item.id]})
+                        } else {
+                          setEditingMenu({...editingMenu, items: editingMenu.items.filter(id => id !== item.id)})
+                        }
+                      }}
+                    />
+                    <span className="product-name">{item.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="products-divider"></div>
+            <div className="products-section">
+              <h5>🥤 Bevande</h5>
+              <div className="products-list">
+                {filteredItems('bevande').map(item => (
+                  <label key={item.id} className="product-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={editingMenu.items.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setEditingMenu({...editingMenu, items: [...editingMenu.items, item.id]})
+                        } else {
+                          setEditingMenu({...editingMenu, items: editingMenu.items.filter(id => id !== item.id)})
+                        }
+                      }}
+                    />
+                    <span className="product-name">{item.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="edit-actions">
             <button onClick={() => handleEditMenu(editingMenu)} className="save-btn">
               💾
@@ -424,22 +454,51 @@ const Menu = () => {
               </div>
               <div className="form-group">
                 <label>Seleziona Prodotti:</label>
-                <select
-                  multiple
-                  value={newMenu.items}
-                  onChange={(e) => {
-                    const selectedItems = Array.from(e.target.selectedOptions, option => option.value)
-                    setNewMenu({...newMenu, items: selectedItems})
-                  }}
-                  className="dialog-select"
-                >
-                  {menuItems.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} (€{item.price.toFixed(2)}) - {item.category}
-                    </option>
-                  ))}
-                </select>
-                <small>Usa Ctrl/Cmd + click per selezionare più prodotti</small>
+                <div className="products-selection">
+                  <div className="products-section">
+                    <h4>🍽️ Cibi</h4>
+                    <div className="products-list">
+                      {filteredItems('cibo').map(item => (
+                        <label key={item.id} className="product-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={newMenu.items.includes(item.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNewMenu({...newMenu, items: [...newMenu.items, item.id]})
+                              } else {
+                                setNewMenu({...newMenu, items: newMenu.items.filter(id => id !== item.id)})
+                              }
+                            }}
+                          />
+                          <span className="product-name">{item.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="products-divider"></div>
+                  <div className="products-section">
+                    <h4>🥤 Bevande</h4>
+                    <div className="products-list">
+                      {filteredItems('bevande').map(item => (
+                        <label key={item.id} className="product-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={newMenu.items.includes(item.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNewMenu({...newMenu, items: [...newMenu.items, item.id]})
+                              } else {
+                                setNewMenu({...newMenu, items: newMenu.items.filter(id => id !== item.id)})
+                              }
+                            }}
+                          />
+                          <span className="product-name">{item.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="dialog-footer">
