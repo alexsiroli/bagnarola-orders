@@ -3,6 +3,7 @@ import { useUser } from './hooks/useUser'
 import { auth } from './firebase'
 import Auth from './components/Auth'
 import Menu from './components/Menu'
+import Statistiche from './components/Statistiche'
 import Cassa from './components/Cassa'
 import Orders from './components/Orders'
 import Settings from './components/Settings'
@@ -20,6 +21,7 @@ function App() {
     { id: 'consegna', name: 'Consegna', icon: '🚚', requiredPermission: 'canManageOrders' },
     { id: 'ordini', name: 'Ordini', icon: '📋', requiredPermission: 'canManageOrders' },
     { id: 'menu', name: 'Menu', icon: '🍽️', requiredPermission: 'canManageMenu' },
+    { id: 'statistiche', name: 'Statistiche', icon: '📊', requiredPermission: 'canManageOrders' },
     { id: 'impostazioni', name: 'Impostazioni', icon: '⚙️', requiredPermission: 'canManageSettings' }
   ]
 
@@ -35,6 +37,8 @@ function App() {
         return <Orders />
       case 'menu':
         return <Menu />
+      case 'statistiche':
+        return <Statistiche />
       case 'impostazioni':
         return <Settings />
       default:
