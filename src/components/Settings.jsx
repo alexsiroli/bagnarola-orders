@@ -66,7 +66,7 @@ const Settings = () => {
       <div className="settings-content">
         <div className="settings-section">
           <h3>🔄 Reset Sistema</h3>
-          <p>Questa operazione cancellerà tutti gli ordini esistenti e riporterà il contatore ordini a 0 (il primo ordine sarà #1).</p>
+          <p>Questa operazione cancellerà tutti gli ordini esistenti.</p>
           <p className="warning-text">⚠️ Attenzione: Questa operazione non può essere annullata!</p>
           
           <div className="reset-actions">

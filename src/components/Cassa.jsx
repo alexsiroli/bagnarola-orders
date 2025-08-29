@@ -347,7 +347,10 @@ const Cassa = () => {
       // Esegui tutti gli aggiornamenti in parallelo
       await Promise.all(updatePromises)
       
-      console.log('Tutte le quantità dei prodotti sono state aggiornate')
+      // Dopo aver aggiornato tutte le quantità, ricalcola TUTTI i menu compositi
+      await recalculateAllMenuCompositiMinQuantities()
+      
+      console.log('Tutte le quantità dei prodotti sono state aggiornate e i menu compositi ricalcolati')
     } catch (error) {
       console.error('Errore nell\'aggiornamento delle quantità dei prodotti:', error)
       // Non blocchiamo il salvataggio dell'ordine se fallisce l'aggiornamento delle quantità
@@ -424,9 +427,16 @@ const Cassa = () => {
         })
       })
 
-      // Esegui tutti gli aggiornamenti in parallelo
+            // Esegui tutti gli aggiornamenti in parallelo
       await Promise.all(updatePromises)
-
+      
+      // Dopo aver aggiornato i menu compositi, ricalcola le loro minQuantity
+      const recalculatePromises = querySnapshot.docs.map(async (docSnapshot) => {
+        await recalculateMenuCompositoMinQuantity(docSnapshot.id)
+      })
+      
+      await Promise.all(recalculatePromises)
+      
       console.log(`Aggiornati ${updatePromises.length} menu compositi per il piatto ${productId}`)
     } catch (error) {
       console.error('Errore nell\'aggiornamento dei menu compositi per il piatto:', error)
@@ -490,9 +500,72 @@ const Cassa = () => {
         })
 
         await Promise.all(updatePromises)
+        
+        // Dopo aver aggiornato le quantità dei piatti, ricalcola la minQuantity del menu
+        await recalculateMenuCompositoMinQuantity(menuId)
       }
     } catch (error) {
       console.error('Errore nell\'aggiornamento delle quantità del menu composito:', error)
+    }
+  }
+
+  // Funzione per ricalcolare la minQuantity di un menu composito
+  const recalculateMenuCompositoMinQuantity = async (menuId) => {
+    try {
+      const menuComposito = menuCompositi.find(menu => menu.id === menuId)
+      if (!menuComposito || !menuComposito.items) return
+      
+      // Ottieni le quantità aggiornate di tutti i piatti del menu
+      const quantities = await Promise.all(
+        menuComposito.items.map(async (itemId) => {
+          const productRef = doc(db, 'menu', itemId)
+          const productDoc = await getDoc(productRef)
+          return productDoc.exists() ? productDoc.data().quantity : 0
+        })
+      )
+      
+      // Calcola la nuova minQuantity
+      const newMinQuantity = Math.min(...quantities)
+      
+      // Aggiorna il menu composito nel database
+      const menuRef = doc(db, 'menuCompositi', menuId)
+      await updateDoc(menuRef, {
+        minQuantity: newMinQuantity,
+        updatedAt: new Date()
+      })
+      
+      console.log(`✅ Menu composito ${menuComposito.name} aggiornato: minQuantity = ${newMinQuantity}`)
+      
+      // Aggiorna anche i dati locali
+      setMenuCompositi(prev => prev.map(menu => 
+        menu.id === menuId 
+          ? { ...menu, minQuantity: newMinQuantity }
+          : menu
+      ))
+      
+    } catch (error) {
+      console.error('Errore nel ricalcolo della minQuantity del menu composito:', error)
+    }
+  }
+
+  // Funzione per ricalcolare TUTTI i menu compositi
+  const recalculateAllMenuCompositiMinQuantities = async () => {
+    try {
+      console.log('🔄 Ricalcolo di tutti i menu compositi...')
+      
+      // Ricalcola ogni menu composito
+      const recalculatePromises = menuCompositi.map(async (menu) => {
+        if (menu.items && menu.items.length > 0) {
+          await recalculateMenuCompositoMinQuantity(menu.id)
+        }
+      })
+      
+      await Promise.all(recalculatePromises)
+      
+      console.log('✅ Tutti i menu compositi sono stati ricalcolati e aggiornati')
+      
+    } catch (error) {
+      console.error('❌ Errore nel ricalcolo di tutti i menu compositi:', error)
     }
   }
 
