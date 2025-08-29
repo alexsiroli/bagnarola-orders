@@ -208,7 +208,6 @@ const Cassa = () => {
       })),
       total: total,
       status: 'in_preparazione', // Stato dell'ordine
-      statusCode: 0, // Codice numerico per lo stato
       createdAt: new Date(),
       updatedAt: new Date()
     }

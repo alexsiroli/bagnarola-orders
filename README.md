@@ -30,6 +30,8 @@ Applicazione web per la gestione completa delle operazioni di un ristorante, inc
 - **Accesso completo** a tutte le funzionalità
 - **Gestione utenti** e permessi
 - **Gestione menu** e prezzi
+- **Esportazione/importazione** menu e piatti (CSV)
+- **Esportazione/importazione** ordini
 - **Report e statistiche**
 - **Impostazioni sistema**
 
@@ -104,6 +106,8 @@ L'app è configurata per utilizzare:
 - ✅ Design ottimizzato per desktop
 - ✅ Gestione stato utente
 - ✅ **Sincronizzazione selezioni cucina** tra dispositivi in tempo reale
+- ✅ **Gestione menu e piatti** con esportazione/importazione CSV
+- ✅ **Gestione ordini** con esportazione/importazione CSV
 
 ## Prossimi Sviluppi
 
@@ -111,7 +115,9 @@ L'app è configurata per utilizzare:
 - Gestione inventario
 - Notifiche in tempo reale per la cucina
 - Dashboard con statistiche e report
-- Sistema di backup e sincronizzazione
+- Sistema di backup automatico
+- Gestione allergeni e ingredienti
+- Report avanzati e analytics
 
 ## Sicurezza
 

@@ -31,12 +31,11 @@ const Orders = () => {
   }, [])
 
   // Funzione per aggiornare lo stato dell'ordine
-  const updateOrderStatus = async (orderId, newStatus, newStatusCode) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const orderRef = doc(db, 'ordini', orderId)
       await updateDoc(orderRef, {
         status: newStatus,
-        statusCode: newStatusCode,
         updatedAt: new Date()
       })
     } catch (error) {
@@ -52,7 +51,6 @@ const Orders = () => {
         const orderRef = doc(db, 'ordini', orderId)
         await updateDoc(orderRef, {
           status: 'annullato',
-          statusCode: 3,
           updatedAt: new Date()
         })
       } catch (error) {
@@ -324,26 +322,9 @@ const Orders = () => {
                   <select
                     value={selectedOrder.status}
                     onChange={(e) => {
-                      const newStatus = e.target.value
-                      let newStatusCode = 0
-                      switch (newStatus) {
-                        case 'in_preparazione':
-                          newStatusCode = 0
-                          break
-                        case 'pronto':
-                          newStatusCode = 1
-                          break
-                        case 'consegnato':
-                          newStatusCode = 2
-                          break
-                        case 'annullato':
-                          newStatusCode = 3
-                          break
-                        default:
-                          newStatusCode = 0
-                      }
-                      updateOrderStatus(selectedOrder.id, newStatus, newStatusCode)
-                      setSelectedOrder({...selectedOrder, status: newStatus})
+                      const newStatus = e.target.value;
+                      updateOrderStatus(selectedOrder.id, newStatus);
+                      setSelectedOrder({...selectedOrder, status: newStatus});
                     }}
                     className="status-select"
                   >
