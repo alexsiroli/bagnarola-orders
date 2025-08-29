@@ -178,12 +178,17 @@
 .order-card.completed {
   background-color: #f8fff8;
   border: 1px solid #d4edda;
+  cursor: default;
 }
 
-.order-card.completed:hover {
-  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.15);
-  border-color: #28a745;
-}
+  .order-card.completed:hover {
+    box-shadow: 0 4px 8px rgba(39, 174, 96, 0.15);
+    border-color: #28a745;
+  }
+  
+  .order-card.completed {
+    cursor: default;
+  }
 
 /* Bottone ripristina */
 .restore-order-btn {

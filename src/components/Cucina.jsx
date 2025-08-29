@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { collection, onSnapshot, query, where, getDocs, updateDoc, doc } from 'firebase/firestore'
+import { collection, onSnapshot, query, where, getDocs, updateDoc, doc, setDoc, deleteDoc } from 'firebase/firestore'
 import './Cucina.css'
 
 const Cucina = () => {
@@ -74,6 +74,11 @@ const Cucina = () => {
           updateDoc(doc(db, 'ordini', docSnapshot.id), {
             status: 'consegnato',
             deliveredAt: new Date()
+          }).then(() => {
+            // Rimuovi la selezione quando l'ordine viene automaticamente consegnato
+            deleteDoc(doc(db, 'selezioniCucina', docSnapshot.id)).catch(() => {
+              // Ignora errori se la selezione non esiste
+            })
           }).catch(error => {
             console.error('Errore nell\'aggiornamento automatico ordine bevande:', error)
           })
@@ -129,6 +134,19 @@ const Cucina = () => {
       setOrdersInPreparation(ordersInPrep)
       setReadyOrders(ordersReady)
       setLoading(false)
+      
+      // Rimuovi selezioni per ordini che non sono più in preparazione
+      // (questo gestisce anche ordini consegnati da altre parti dell'app)
+      if (selectedOrders.size > 0) {
+        const currentOrderIds = new Set(ordersInPrep.map(order => order.id))
+        selectedOrders.forEach(orderId => {
+          if (!currentOrderIds.has(orderId)) {
+            deleteDoc(doc(db, 'selezioniCucina', orderId)).catch(() => {
+              // Ignora errori se la selezione non esiste
+            })
+          }
+        })
+      }
     }, (error) => {
       console.error('Errore nel caricamento degli ordini:', error)
       setLoading(false)
@@ -137,19 +155,76 @@ const Cucina = () => {
     return () => unsubscribe()
   }, [])
 
+  useEffect(() => {
+    // Listener per le selezioni degli ordini in tempo reale
+    const selectionsQuery = query(
+      collection(db, 'selezioniCucina'),
+      where('status', '==', 'in_preparazione')
+    )
+
+    const unsubscribeSelections = onSnapshot(selectionsQuery, (snapshot) => {
+      const newSelectedOrders = new Set()
+      snapshot.forEach((docSnapshot) => {
+        const selectionData = docSnapshot.data()
+        if (selectionData.orderId) {
+          newSelectedOrders.add(selectionData.orderId)
+        }
+      })
+      
+      // Filtra solo le selezioni per ordini che sono ancora in preparazione
+      const validSelectedOrders = new Set()
+      newSelectedOrders.forEach(orderId => {
+        if (ordersInPreparation.some(order => order.id === orderId)) {
+          validSelectedOrders.add(orderId)
+        }
+      })
+      
+      setSelectedOrders(validSelectedOrders)
+      
+      // Pulisci selezioni orfane (per ordini che non esistono più o non sono più in preparazione)
+      newSelectedOrders.forEach(orderId => {
+        if (!ordersInPreparation.some(order => order.id === orderId)) {
+          deleteDoc(doc(db, 'selezioniCucina', orderId)).catch(() => {
+            // Ignora errori se la selezione non esiste
+          })
+        }
+      })
+    }, (error) => {
+      console.error('Errore nel caricamento delle selezioni:', error)
+    })
+
+    return () => unsubscribeSelections()
+  }, [ordersInPreparation])
+
   {/* Funzione formatDate rimossa - non più necessaria */}
 
-  // Funzione per gestire il toggle della selezione ordine
-  const toggleOrderSelection = (orderId) => {
-    setSelectedOrders(prev => {
-      const newSelected = new Set(prev)
-      if (newSelected.has(orderId)) {
-        newSelected.delete(orderId)
+  // Funzione per gestire il toggle della selezione ordine (ora sincronizzata)
+  const toggleOrderSelection = async (orderId) => {
+    try {
+      if (selectedOrders.has(orderId)) {
+        // Rimuovi selezione
+        await deleteDoc(doc(db, 'selezioniCucina', orderId))
       } else {
-        newSelected.add(orderId)
+        // Aggiungi selezione
+        await setDoc(doc(db, 'selezioniCucina', orderId), {
+          orderId: orderId,
+          status: 'in_preparazione',
+          selectedAt: new Date()
+        })
       }
-      return newSelected
-    })
+    } catch (error) {
+      console.error('Errore nella gestione della selezione:', error)
+      // In caso di errore, aggiorna lo stato locale per mantenere la UI coerente
+      setSelectedOrders(prev => {
+        const newSelected = new Set(prev)
+        if (newSelected.has(orderId)) {
+          newSelected.delete(orderId)
+        } else {
+          newSelected.add(orderId)
+        }
+        return newSelected
+      })
+    }
   }
 
   // Funzione per completare un ordine (cambia stato a "pronto")
@@ -159,6 +234,14 @@ const Cucina = () => {
         status: 'pronto',
         completedAt: new Date()
       })
+      
+      // Rimuovi la selezione quando l'ordine viene completato
+      try {
+        await deleteDoc(doc(db, 'selezioniCucina', orderId))
+      } catch (selectionError) {
+        console.log('Selezione già rimossa o non esistente per ordine:', orderId)
+      }
+      
       console.log('✅ Ordine completato:', orderId)
     } catch (error) {
       console.error('❌ Errore nel completare l\'ordine:', error)
@@ -172,6 +255,14 @@ const Cucina = () => {
         status: 'in_preparazione',
         completedAt: null
       })
+      
+      // Rimuovi eventuali selezioni esistenti quando l'ordine viene ripristinato
+      try {
+        await deleteDoc(doc(db, 'selezioniCucina', orderId))
+      } catch (selectionError) {
+        console.log('Selezione già rimossa o non esistente per ordine:', orderId)
+      }
+      
       console.log('🔄 Ordine ripristinato:', orderId)
     } catch (error) {
       console.error('❌ Errore nel ripristinare l\'ordine:', error)
@@ -312,7 +403,6 @@ const Cucina = () => {
               <div 
                 key={order.id} 
                 className="order-card completed"
-                onClick={() => toggleOrderSelection(order.id)}
               >
                 <div className="order-header">
                   <div className="order-number">

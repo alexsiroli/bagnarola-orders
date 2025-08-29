@@ -41,6 +41,7 @@ Applicazione web per la gestione completa delle operazioni di un ristorante, inc
 ### **👨‍🍳 Cucina**
 - **Visualizzazione ordini** in preparazione
 - **Aggiornamento stato** ordini
+- **Selezione ordini** sincronizzata tra dispositivi
 - **Accesso limitato** alle altre funzioni
 
 ## Installazione e Avvio
@@ -68,6 +69,7 @@ npm run dev
 
 - **Frontend**: React 18, Vite
 - **Backend**: Firebase (Authentication, Firestore)
+- **Sincronizzazione**: Firestore Realtime Updates
 - **Styling**: CSS3, Design System personalizzato
 - **Build Tool**: Vite
 
@@ -101,15 +103,15 @@ L'app è configurata per utilizzare:
 - ✅ Layout chiaro e funzionale
 - ✅ Design ottimizzato per desktop
 - ✅ Gestione stato utente
+- ✅ **Sincronizzazione selezioni cucina** tra dispositivi in tempo reale
 
 ## Prossimi Sviluppi
 
-- Implementazione delle funzionalità specifiche per ogni sezione
-- Integrazione con Firestore per la gestione degli ordini
-- Sistema di ruoli e permessi
 - Integrazione con stampanti per ricevute
 - Gestione inventario
 - Notifiche in tempo reale per la cucina
+- Dashboard con statistiche e report
+- Sistema di backup e sincronizzazione
 
 ## Sicurezza
 
