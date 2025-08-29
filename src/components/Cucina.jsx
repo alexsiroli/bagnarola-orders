@@ -239,10 +239,10 @@ const Cucina = () => {
       try {
         await deleteDoc(doc(db, 'selezioniCucina', orderId))
       } catch (selectionError) {
-        console.log('Selezione già rimossa o non esistente per ordine:', orderId)
+        // Log rimosso per semplificare la console
       }
       
-      console.log('✅ Ordine completato:', orderId)
+      // Log rimosso per semplificare la console
     } catch (error) {
       console.error('❌ Errore nel completare l\'ordine:', error)
     }
@@ -260,10 +260,10 @@ const Cucina = () => {
       try {
         await deleteDoc(doc(db, 'selezioniCucina', orderId))
       } catch (selectionError) {
-        console.log('Selezione già rimossa o non esistente per ordine:', orderId)
+        // Log rimosso per semplificare la console
       }
       
-      console.log('🔄 Ordine ripristinato:', orderId)
+      // Log rimosso per semplificare la console
     } catch (error) {
       console.error('❌ Errore nel ripristinare l\'ordine:', error)
     }

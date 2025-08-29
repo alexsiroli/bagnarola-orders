@@ -145,7 +145,7 @@ const Menu = () => {
       // Esegui tutti gli aggiornamenti in parallelo
       await Promise.all(updatePromises)
 
-      console.log(`Aggiornati ${updatePromises.length} menu compositi per il piatto ${updatedItemId}`)
+      // Log rimosso per semplificare la console
     } catch (error) {
       console.error('Errore nell\'aggiornamento dei menu compositi:', error)
     }

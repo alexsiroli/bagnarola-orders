@@ -107,7 +107,15 @@ L'app è configurata per utilizzare:
 - ✅ Gestione stato utente
 - ✅ **Sincronizzazione selezioni cucina** tra dispositivi in tempo reale
 - ✅ **Gestione menu e piatti** con esportazione/importazione CSV
-- ✅ **Gestione ordini** con esportazione/importazione CSV
+- ✅ **Gestione ordini** con esportazione/importazione CSV e prezzi parziali corretti
+
+## Gestione Prezzi Parziali
+
+- ✅ **Export CSV**: Include il totale speso per ogni prodotto (quantità × prezzo unitario)
+- ✅ **Import CSV**: Ripristina correttamente i prezzi parziali e unitari
+- ✅ **Visualizzazione**: Mostra nei dettagli dell'ordine il totale speso per ogni piatto
+- ✅ **Ordini Staff**: Se il totale dell'ordine è 0, tutti i prezzi parziali sono impostati a 0
+- ✅ **Coerenza Dati**: Mantiene la coerenza tra totali ordine e prezzi parziali
 
 ## Prossimi Sviluppi
 

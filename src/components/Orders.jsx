@@ -309,7 +309,7 @@ const Orders = () => {
                       </div>
                       <div className="item-details">
                         <span className="item-quantity">Qty: {item.quantity}</span>
-                        <span className="item-price">€{item.price?.toFixed(2) || '0.00'}</span>
+                        <span className="item-price">€{selectedOrder.total === 0 ? '0.00' : (item.quantity * (item.price || 0)).toFixed(2)}</span>
                       </div>
                     </div>
                   ))}

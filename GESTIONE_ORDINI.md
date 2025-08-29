@@ -22,8 +22,8 @@ Questa funzionalità permette di esportare e importare tutti gli ordini tramite 
 ### Formato Esportazione
 ```csv
 Numero Ordine,Stato,Totale (€),Data Creazione,Data Aggiornamento,Data Completamento,Data Consegna,Prodotti,Numero Prodotti
-1,in_preparazione,15.50,2024-01-15T10:30:00.000Z,2024-01-15T10:30:00.000Z,,,"2x Pizza Margherita (cibo); 1x Coca Cola (bevande)",2
-2,pronto,22.00,2024-01-15T11:00:00.000Z,2024-01-15T11:15:00.000Z,2024-01-15T11:15:00.000Z,,"1x Menu Completo (composito)",1
+1,in_preparazione,15.50,2024-01-15T10:30:00.000Z,2024-01-15T10:30:00.000Z,,,"2x Pizza Margherita (cibo) [€17.00]; 1x Coca Cola (bevande) [€3.50]",2
+2,pronto,22.00,2024-01-15T11:00:00.000Z,2024-01-15T11:15:00.000Z,2024-01-15T11:15:00.000Z,,"1x Menu Completo (composito) [€22.00]",1
 ```
 
 ### Campi Esportati
@@ -34,7 +34,7 @@ Numero Ordine,Stato,Totale (€),Data Creazione,Data Aggiornamento,Data Completa
 - **Data Aggiornamento**: Data e ora dell'ultimo aggiornamento
 - **Data Completamento**: Data e ora di completamento (se pronto)
 - **Data Consegna**: Data e ora di consegna (se consegnato)
-- **Prodotti**: Lista prodotti formattata (quantità x nome (categoria))
+- **Prodotti**: Lista prodotti formattata (quantità x nome (categoria) [€totale_parziale])
 - **Numero Prodotti**: Numero totale di prodotti nell'ordine
 
 ## Processo di Import
@@ -63,9 +63,10 @@ Numero Ordine,Stato,Totale (€),Data Creazione,Data Aggiornamento,Data Completa
 - Esempio: `"2x Pizza Margherita (cibo); 1x Coca Cola (bevande)"`
 
 ### **Formato Prodotti**
-- Sintassi: `quantità x nome (categoria)`
+- Sintassi: `quantità x nome (categoria) [€totale_parziale]`
 - Separatore tra prodotti: `;`
-- Esempio: `2x Pizza Margherita (cibo); 1x Coca Cola (bevande)`
+- Esempio: `2x Pizza Margherita (cibo) [€17.00]; 1x Coca Cola (bevande) [€3.50]`
+- **Nota**: Il totale parziale è la spesa totale per quel prodotto (quantità × prezzo unitario)
 
 ### **Parsing Date**
 - Formato ISO 8601: `2024-01-15T10:30:00.000Z`
@@ -96,7 +97,13 @@ Numero Ordine,Stato,Totale (€),Data Creazione,Data Aggiornamento,Data Completa
 - Solo utenti autenticati possono accedere
 - L'import è irreversibile (cancella tutto)
 - Richiede file CSV con struttura corretta
-- I prezzi dei prodotti non vengono importati (solo quantità e nomi)
+- I prezzi dei prodotti vengono importati come totali parziali (quantità × prezzo unitario)
+
+### **Gestione Ordini Staff**
+- **Rilevamento**: Se il totale dell'ordine è 0, viene considerato ordine dello staff
+- **Prezzi Parziali**: Tutti i prezzi parziali vengono impostati automaticamente a 0
+- **Coerenza**: Mantiene la coerenza tra totale ordine e prezzi parziali
+- **Esempio**: Ordine staff con 3 patatine → totale: 0€, parziale patatine: 0€
 
 ## Casi d'Uso
 

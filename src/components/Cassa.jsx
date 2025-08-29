@@ -112,7 +112,7 @@ const Cassa = () => {
         // Aggiorna solo se il numero è diverso (evita loop infiniti)
         if (newLastOrderNumber !== lastOrderNumber) {
           setLastOrderNumber(newLastOrderNumber)
-          console.log(`Nuovo ordine rilevato: #${newLastOrderNumber}`)
+          // Log rimosso per semplificare la console
         }
       }
     }, (error) => {
@@ -229,10 +229,10 @@ const Cassa = () => {
         if (counterDoc.exists()) {
           // Se esiste, incrementa di 1
           newNumber = counterDoc.data().currentNumber + 1
-          console.log('📊 Contatore esistente, incremento da:', counterDoc.data().currentNumber, 'a:', newNumber)
+          // Log rimosso per semplificare la console
         } else {
           // Se non esiste, inizia da 1
-          console.log('🆕 Contatore non trovato, creo nuovo contatore con valore 1')
+          // Log rimosso per semplificare la console
         }
         
         // Aggiorna o crea il contatore
@@ -241,7 +241,7 @@ const Cassa = () => {
         return newNumber
       })
       
-      console.log('✅ Transazione completata, nuovo numero ordine:', result)
+      // Log rimosso per semplificare la console
       return result
       
     } catch (error) {
@@ -249,7 +249,7 @@ const Cassa = () => {
       
       // Fallback: usa timestamp come numero univoco
       const timestamp = Date.now()
-      console.log('🔄 Fallback: uso timestamp come numero ordine:', timestamp)
+      // Log rimosso per semplificare la console
       return timestamp
     }
   }
@@ -270,10 +270,10 @@ const Cassa = () => {
       let finalOrderNumber = newOrderNumber
       
       if (!duplicateSnapshot.empty) {
-        console.warn('⚠️ Numero ordine duplicato rilevato, riprovo...')
+        // Log rimosso per semplificare la console
         // Se c'è un duplicato, riprova con un nuovo numero
         const retryNumber = await getNextOrderNumber()
-        console.log('🔄 Nuovo tentativo con numero:', retryNumber)
+        // Log rimosso per semplificare la console
         
         // Controlla di nuovo
         const retryCheck = query(
@@ -285,7 +285,7 @@ const Cassa = () => {
         if (!retrySnapshot.empty) {
           // Se anche il secondo tentativo fallisce, usa timestamp
           const timestamp = Date.now()
-          console.log('🚨 Fallback finale: uso timestamp:', timestamp)
+          // Log rimosso per semplificare la console
           finalOrderNumber = timestamp
         } else {
           finalOrderNumber = retryNumber
@@ -316,7 +316,7 @@ const Cassa = () => {
       setIsStaffOrder(false)
 
       // Log del numero dell'ordine creato
-      console.log(`🆕 Nuovo ordine creato: #${finalOrderNumber}`)
+      // Log rimosso per semplificare la console
 
       // Usa setTimeout per mostrare il popup DOPO che React ha aggiornato l'interfaccia
       // Questo garantisce che il carrello sia vuoto quando si vede il popup
@@ -345,7 +345,7 @@ const Cassa = () => {
             quantity: increment(-item.quantity)
           })
 
-          console.log(`Aggiornata quantità per ${item.name}: -${item.quantity}`)
+          // Log rimosso per semplificare la console
 
           // Aggiorna anche i menu compositi che contengono questo piatto
           await updateMenuCompositiForProduct(item.id, item.quantity)
@@ -358,7 +358,7 @@ const Cassa = () => {
       // Dopo aver aggiornato tutte le quantità, ricalcola TUTTI i menu compositi
       await recalculateAllMenuCompositiMinQuantities()
       
-      console.log('Tutte le quantità dei prodotti sono state aggiornate e i menu compositi ricalcolati')
+      // Log rimosso per semplificare la console
     } catch (error) {
       console.error('Errore nell\'aggiornamento delle quantità dei prodotti:', error)
       // Non blocchiamo il salvataggio dell'ordine se fallisce l'aggiornamento delle quantità
@@ -401,7 +401,7 @@ const Cassa = () => {
       }
     })
 
-    console.log('Quantità locali aggiornate per feedback istantaneo')
+    // Log rimosso per semplificare la console
   }
 
   // Funzione per aggiornare i menu compositi quando si vende un piatto singolo
@@ -445,7 +445,7 @@ const Cassa = () => {
       
       await Promise.all(recalculatePromises)
       
-      console.log(`Aggiornati ${updatePromises.length} menu compositi per il piatto ${productId}`)
+      // Log rimosso per semplificare la console
     } catch (error) {
       console.error('Errore nell\'aggiornamento dei menu compositi per il piatto:', error)
     }
@@ -504,7 +504,7 @@ const Cassa = () => {
             quantity: increment(-orderQuantity)
           })
 
-          console.log(`Aggiornata quantità per piatto del menu ${menuComposito.name}: -${orderQuantity}`)
+          // Log rimosso per semplificare la console
         })
 
         await Promise.all(updatePromises)
@@ -542,7 +542,7 @@ const Cassa = () => {
         updatedAt: new Date()
       })
       
-      console.log(`✅ Menu composito ${menuComposito.name} aggiornato: minQuantity = ${newMinQuantity}`)
+      // Log rimosso per semplificare la console
       
       // Aggiorna anche i dati locali
       setMenuCompositi(prev => prev.map(menu => 
@@ -559,7 +559,7 @@ const Cassa = () => {
   // Funzione per ricalcolare TUTTI i menu compositi
   const recalculateAllMenuCompositiMinQuantities = async () => {
     try {
-      console.log('🔄 Ricalcolo di tutti i menu compositi...')
+      // Log rimosso per semplificare la console
       
       // Ricalcola ogni menu composito
       const recalculatePromises = menuCompositi.map(async (menu) => {
@@ -570,7 +570,7 @@ const Cassa = () => {
       
       await Promise.all(recalculatePromises)
       
-      console.log('✅ Tutti i menu compositi sono stati ricalcolati e aggiornati')
+      // Log rimosso per semplificare la console
       
     } catch (error) {
       console.error('❌ Errore nel ricalcolo di tutti i menu compositi:', error)

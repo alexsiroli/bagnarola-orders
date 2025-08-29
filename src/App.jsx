@@ -67,9 +67,7 @@ function App() {
   const availableSections = sections;
 
   // Debug: mostra i dati utente nella console
-  console.log('Debug - userData:', userData);
-  console.log('Debug - Permissions:', userData?.permissions);
-  console.log('Debug - Available sections:', availableSections);
+      // Log rimossi per semplificare la console
 
   return (
     <div className="app">

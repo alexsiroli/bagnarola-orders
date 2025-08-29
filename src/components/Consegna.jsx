@@ -112,7 +112,7 @@ const Consegna = () => {
         status: 'consegnato',
         deliveredAt: new Date()
       })
-      console.log('✅ Ordine consegnato:', orderId)
+      // Log rimosso per semplificare la console
     } catch (error) {
       console.error('❌ Errore nella consegna dell\'ordine:', error)
     }

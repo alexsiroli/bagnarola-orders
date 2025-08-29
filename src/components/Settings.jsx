@@ -42,7 +42,7 @@ const Settings = () => {
       try {
         const counterRef = doc(db, 'counters', 'orderCounter')
         await setDoc(counterRef, { currentNumber: 0 })
-        console.log('✅ Contatore ordini resettato a 0')
+        // Log rimosso per semplificare la console
       } catch (error) {
         console.error('⚠️ Errore nel reset del contatore ordini:', error)
         // Non blocchiamo il reset se fallisce il contatore
@@ -290,7 +290,7 @@ const Settings = () => {
               // Salva la mappatura vecchio ID -> nuovo ID
               if (oldId) {
                 idMapping[oldId] = newDocRef.id
-                console.log(`🔄 Mappatura ID: ${oldId} -> ${newDocRef.id}`)
+                // Log rimosso per semplificare la console
               }
               
               importedProducts++
@@ -329,7 +329,7 @@ const Settings = () => {
                     // Converti i vecchi ID in nuovi ID usando la mappatura
                     const newProductIds = productIds.map(oldId => idMapping[oldId] || oldId)
                     menuData.items = newProductIds
-                    console.log(`🔄 Menu ${menuData.name}: prodotti ${productIds.join(', ')} -> ${newProductIds.join(', ')}`)
+                    // Log rimosso per semplificare la console
                   }
                   break
                 case 'Quantità Disponibile':
@@ -357,7 +357,7 @@ const Settings = () => {
       await importBatch.commit()
 
       // Ricalcola le quantità dei menu compositi dopo l'import
-      console.log('🔄 Ricalcolo delle quantità dei menu compositi...')
+      // Log rimosso per semplificare la console
       await recalculateMenuCompositiAfterImport()
 
       alert(`✅ Import completato con successo!\n\nImportati:\n- ${importedProducts} prodotti/bevande\n- ${importedMenus} menu compositi\n\n✅ Quantità dei menu compositi ricalcolate automaticamente`)
@@ -393,7 +393,11 @@ const Settings = () => {
           updatedAt: orderData.updatedAt ? (orderData.updatedAt.toDate ? orderData.updatedAt.toDate().toISOString() : new Date(orderData.updatedAt).toISOString()) : '',
           completedAt: orderData.completedAt ? (orderData.completedAt.toDate ? orderData.completedAt.toDate().toISOString() : new Date(orderData.completedAt).toISOString()) : '',
           deliveredAt: orderData.deliveredAt ? (orderData.deliveredAt.toDate ? orderData.deliveredAt.toDate().toISOString() : new Date(orderData.deliveredAt).toISOString()) : '',
-          items: orderData.items ? orderData.items.map(item => `${item.quantity}x ${item.name} (${item.category})`).join('; ') : '',
+          items: orderData.items ? orderData.items.map(item => {
+            // Se l'ordine è dello staff (totale = 0), tutti i parziali sono 0
+            const partialTotal = orderData.total === 0 ? 0 : (item.quantity * (item.price || 0))
+            return `${item.quantity}x ${item.name} (${item.category}) [€${partialTotal.toFixed(2)}]`
+          }).join('; ') : '',
           itemsCount: orderData.items ? orderData.items.length : 0
         }
         
@@ -470,13 +474,7 @@ const Settings = () => {
       const fileContent = await importOrdersFile.text()
       const lines = fileContent.split('\n').filter(line => line.trim())
       
-      if (allLines.length < 2) {
-        throw new Error('File CSV non valido. Deve contenere almeno header e una riga di dati.')
-      }
-
-      // Verifica che ci siano abbastanza righe non vuote
-      const nonEmptyLines = allLines.filter(line => line.trim())
-      if (nonEmptyLines.length < 2) {
+      if (lines.length < 2) {
         throw new Error('File CSV non valido. Deve contenere almeno header e una riga di dati.')
       }
 
@@ -579,14 +577,30 @@ const Settings = () => {
                 if (value && value !== '""') {
                   const products = value.replace(/"/g, '').split(';')
                   products.forEach(product => {
-                    const match = product.trim().match(/(\d+)x (.+?) \((.+?)\)/)
+                    // Pattern aggiornato per estrarre il prezzo totale tra parentesi quadre
+                    const match = product.trim().match(/(\d+)x (.+?) \((.+?)\)(\s*\[€(\d+(?:\.\d+)?)\])?/)
                     if (match) {
-                      orderData.items.push({
-                        quantity: parseInt(match[1]),
-                        name: match[2].trim(),
-                        category: match[3].trim(),
-                        price: 0 // Prezzo non disponibile nel CSV
-                      })
+                      const quantity = parseInt(match[1])
+                      const totalPrice = match[5] ? parseFloat(match[5]) : 0
+                      
+                      // Se l'ordine è dello staff (totale = 0), tutti i prezzi parziali sono 0
+                      if (orderData.total === 0) {
+                        orderData.items.push({
+                          quantity: quantity,
+                          name: match[2].trim(),
+                          category: match[3].trim(),
+                          price: 0 // Prezzo unitario 0 per ordini staff
+                        })
+                      } else {
+                        // Calcola il prezzo unitario dividendo il totale per la quantità
+                        const unitPrice = quantity > 0 ? totalPrice / quantity : 0
+                        orderData.items.push({
+                          quantity: quantity,
+                          name: match[2].trim(),
+                          category: match[3].trim(),
+                          price: unitPrice
+                        })
+                      }
                     }
                   })
                 }
@@ -636,7 +650,7 @@ const Settings = () => {
         menuCompositi.push({ id: doc.id, ...doc.data() })
       })
       
-      console.log(`📋 Trovati ${menuCompositi.length} menu compositi`)
+      // Log rimossi per semplificare la console
       
       // Ottieni tutti i prodotti per calcolare le quantità
       const menuItemsSnapshot = await getDocs(collection(db, 'menu'))
@@ -645,26 +659,24 @@ const Settings = () => {
         menuItems.push({ id: doc.id, ...doc.data() })
       })
       
-      console.log(`🍽️ Trovati ${menuItems.length} prodotti`)
-      console.log('📊 Prodotti disponibili:', menuItems.map(p => ({ id: p.id, name: p.name, quantity: p.quantity })))
+      // Log rimossi per semplificare la console
       
       // Ricalcola ogni menu composito
       const recalculatePromises = menuCompositi.map(async (menu) => {
         if (menu.items && menu.items.length > 0) {
           try {
-            console.log(`\n🔍 Analizzando menu: ${menu.name}`)
-            console.log(`   Prodotti componenti: ${menu.items.join(', ')}`)
+            // Log rimossi per semplificare la console
             
             // Calcola la quantità minima disponibile tra tutti i prodotti del menu
             const quantities = menu.items.map(itemId => {
               const product = menuItems.find(i => i.id === itemId)
               const quantity = product ? (product.quantity || 0) : 0
-              console.log(`   - Prodotto ${itemId}: ${product ? product.name : 'NON TROVATO'} (quantità: ${quantity})`)
+              // Log rimosso per semplificare la console
               return quantity
             })
             
             const newMinQuantity = Math.min(...quantities)
-            console.log(`   📊 Quantità calcolate: [${quantities.join(', ')}] -> MinQuantity: ${newMinQuantity}`)
+            // Log rimosso per semplificare la console
             
             // Aggiorna il menu composito nel database
             const menuRef = doc(db, 'menuCompositi', menu.id)
@@ -673,17 +685,17 @@ const Settings = () => {
               updatedAt: new Date()
             })
             
-            console.log(`✅ Menu composito ${menu.name} aggiornato: minQuantity = ${newMinQuantity}`)
+            // Log rimosso per semplificare la console
           } catch (error) {
             console.error(`❌ Errore nel ricalcolo del menu ${menu.name}:`, error)
           }
         } else {
-          console.log(`⚠️ Menu ${menu.name} non ha prodotti componenti`)
+          // Log rimosso per semplificare la console
         }
       })
       
       await Promise.all(recalculatePromises)
-      console.log('✅ Tutti i menu compositi sono stati ricalcolati e aggiornati')
+      // Log rimosso per semplificare la console
       
     } catch (error) {
       console.error('❌ Errore nel ricalcolo delle quantità dei menu compositi:', error)
