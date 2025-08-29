@@ -7,6 +7,7 @@ import Cassa from './components/Cassa'
 import Orders from './components/Orders'
 import Settings from './components/Settings'
 import Cucina from './components/Cucina'
+import Consegna from './components/Consegna'
 import './App.css'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
   const sections = [
     { id: 'cassa', name: 'Cassa', icon: '💰', requiredPermission: 'canManageCassa' },
     { id: 'cucina', name: 'Cucina', icon: '👨‍🍳', requiredPermission: 'canManageOrders' },
+    { id: 'consegna', name: 'Consegna', icon: '🚚', requiredPermission: 'canManageOrders' },
     { id: 'ordini', name: 'Ordini', icon: '📋', requiredPermission: 'canManageOrders' },
     { id: 'menu', name: 'Menu', icon: '🍽️', requiredPermission: 'canManageMenu' },
     { id: 'impostazioni', name: 'Impostazioni', icon: '⚙️', requiredPermission: 'canManageSettings' }
@@ -27,6 +29,8 @@ function App() {
         return <Cassa />
       case 'cucina':
         return <Cucina />
+      case 'consegna':
+        return <Consegna />
       case 'ordini':
         return <Orders />
       case 'menu':
