@@ -6,6 +6,7 @@ import Menu from './components/Menu'
 import Cassa from './components/Cassa'
 import Orders from './components/Orders'
 import Settings from './components/Settings'
+import Cucina from './components/Cucina'
 import './App.css'
 
 function App() {
@@ -25,7 +26,7 @@ function App() {
       case 'cassa':
         return <Cassa />
       case 'cucina':
-        return <div className="section-content">Pagina Cucina - Visualizzazione ordini in preparazione</div>
+        return <Cucina />
       case 'ordini':
         return <Orders />
       case 'menu':
