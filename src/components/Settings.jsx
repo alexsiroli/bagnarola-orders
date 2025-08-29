@@ -14,6 +14,7 @@ const Settings = () => {
   const [isImportingOrders, setIsImportingOrders] = useState(false)
   const [showImportOrdersDialog, setShowImportOrdersDialog] = useState(false)
   const [importOrdersFile, setImportOrdersFile] = useState(null)
+  const [isExportingStats, setIsExportingStats] = useState(false)
 
   // Funzione per resettare tutti gli ordini
   const resetAllOrders = async () => {
@@ -462,6 +463,198 @@ const Settings = () => {
     }
   }
 
+  // Funzione per esportare statistiche in CSV
+  const exportStatsData = async () => {
+    setIsExportingStats(true)
+    try {
+      // Carica tutti gli ordini
+      const ordersSnapshot = await getDocs(collection(db, 'ordini'))
+      const orders = []
+      ordersSnapshot.forEach((doc) => {
+        orders.push({ id: doc.id, ...doc.data() })
+      })
+
+      // Carica prodotti del menu
+      const menuSnapshot = await getDocs(collection(db, 'menu'))
+      const menuItems = []
+      menuSnapshot.forEach((doc) => {
+        menuItems.push({ id: doc.id, ...doc.data() })
+      })
+
+      // Carica menu compositi
+      const compositiSnapshot = await getDocs(collection(db, 'menuCompositi'))
+      const menuCompositi = []
+      compositiSnapshot.forEach((doc) => {
+        menuCompositi.push({ id: doc.id, ...doc.data() })
+      })
+
+      // Calcola statistiche
+      let totalRevenue = 0
+      let validOrdersCount = 0
+      const categorySales = {}
+      const categorySalesCount = {}
+      const productSales = {}
+      const productSalesCount = {}
+      const dailyRevenue = {}
+
+      // Analizza ordini (escludendo staff e annullati)
+      orders.forEach(order => {
+        if (order.status === 'annullato' || order.total === 0) return
+        
+        validOrdersCount++
+        totalRevenue += order.total || 0
+
+        // Organizza per data
+        const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt)
+        const dateKey = date.toISOString().split('T')[0]
+        dailyRevenue[dateKey] = (dailyRevenue[dateKey] || 0) + (order.total || 0)
+
+        // Analizza prodotti
+        order.items?.forEach(item => {
+          const itemRevenue = order.total === 0 ? 0 : (item.quantity * (item.price || 0))
+          
+          // Per categoria
+          categorySales[item.category] = (categorySales[item.category] || 0) + itemRevenue
+          categorySalesCount[item.category] = (categorySalesCount[item.category] || 0) + item.quantity
+
+          // Per prodotto
+          const productKey = `${item.name}_${item.category}`
+          productSales[productKey] = (productSales[productKey] || 0) + itemRevenue
+          productSalesCount[productKey] = (productSalesCount[productKey] || 0) + item.quantity
+        })
+      })
+
+      // Crea CSV con statistiche generali
+      const generalStatsHeaders = [
+        'Metrica',
+        'Valore',
+        'Descrizione'
+      ]
+      
+      const generalStatsRows = [
+        ['Totale Ricavi (€)', totalRevenue.toFixed(2), 'Ricavi totali escludendo ordini staff'],
+        ['Numero Ordini', validOrdersCount, 'Solo ordini paganti (esclusi staff e annullati)'],
+        ['Valore Medio Ordine (€)', validOrdersCount > 0 ? (totalRevenue / validOrdersCount).toFixed(2) : '0.00', 'Media ricavi per ordine'],
+        ['Ordini Staff', orders.filter(o => o.total === 0).length, 'Ordini interni con totale 0'],
+        ['Ordini Annullati', orders.filter(o => o.status === 'annullato').length, 'Ordini cancellati'],
+        ['Totale Ordini Sistema', orders.length, 'Tutti gli ordini nel sistema']
+      ]
+
+      // Crea CSV con vendite per categoria
+      const categoryStatsHeaders = [
+        'Categoria',
+        'Ricavi Totali (€)',
+        'Quantità Venduta',
+        'Percentuale Ricavi'
+      ]
+      
+      const categoryStatsRows = Object.entries(categorySales).map(([category, revenue]) => [
+        category,
+        revenue.toFixed(2),
+        categorySalesCount[category] || 0,
+        totalRevenue > 0 ? ((revenue / totalRevenue) * 100).toFixed(2) + '%' : '0%'
+      ])
+
+      // Crea CSV con top prodotti
+      const topProductsHeaders = [
+        'Prodotto',
+        'Categoria',
+        'Ricavi Totali (€)',
+        'Quantità Venduta',
+        'Prezzo Medio (€)'
+      ]
+      
+      const topProductsRows = Object.entries(productSales)
+        .map(([key, revenue]) => {
+          const [name, category] = key.split('_')
+          const quantity = productSalesCount[key] || 0
+          const avgPrice = quantity > 0 ? (revenue / quantity).toFixed(2) : '0.00'
+          return [name, category, revenue.toFixed(2), quantity, avgPrice]
+        })
+        .sort((a, b) => parseFloat(b[2]) - parseFloat(a[2])) // Ordina per ricavi decrescenti
+
+      // Crea CSV con ricavi giornalieri
+      const dailyStatsHeaders = [
+        'Data',
+        'Ricavi (€)',
+        'Numero Ordini',
+        'Valore Medio (€)'
+      ]
+      
+      const dailyStatsRows = Object.entries(dailyRevenue)
+        .map(([date, revenue]) => {
+          const dayOrders = orders.filter(o => {
+            if (o.status === 'annullato' || o.total === 0) return false
+            const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt)
+            return orderDate.toISOString().split('T')[0] === date
+          })
+          const avgValue = dayOrders.length > 0 ? (revenue / dayOrders.length).toFixed(2) : '0.00'
+          return [date, revenue.toFixed(2), dayOrders.length, avgValue]
+        })
+        .sort((a, b) => new Date(a[0]) - new Date(b[0])) // Ordina per data
+
+      // Combina tutti i CSV in un unico file
+      const csvContent = [
+        '=== STATISTICHE GENERALI ===',
+        generalStatsHeaders.join(','),
+        ...generalStatsRows.map(row => row.join(',')),
+        '',
+        '=== VENDITE PER CATEGORIA ===',
+        categoryStatsHeaders.join(','),
+        ...categoryStatsRows.map(row => row.join(',')),
+        '',
+        '=== TOP PRODOTTI PER RICAVI ===',
+        topProductsHeaders.join(','),
+        ...topProductsRows.map(row => row.join(',')),
+        '',
+        '=== RICAVI GIORNALIERI ===',
+        dailyStatsHeaders.join(','),
+        ...dailyStatsRows.map(row => row.join(',')),
+        '',
+        '=== INVENTARIO ATTUALE ===',
+        'Prodotto,Categoria,Prezzo (€),Quantità Disponibile,Stato',
+        ...menuItems.map(item => [
+          item.name,
+          item.category,
+          (item.price || 0).toFixed(2),
+          item.quantity || 0,
+          item.available ? 'Disponibile' : 'Non Disponibile'
+        ].join(',')),
+        '',
+        '=== MENU COMPOSITI ===',
+        'Nome Menu,Prezzo (€),Descrizione,Prodotti Componenti,Quantità Minima',
+        ...menuCompositi.map(menu => [
+          menu.name,
+          (menu.price || 0).toFixed(2),
+          menu.description || '',
+          menu.items ? menu.items.join('; ') : '',
+          menu.minQuantity || 0
+        ].join(','))
+      ].join('\n')
+
+      // Crea e scarica il file CSV
+      const dataBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(dataBlob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `statistiche_${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      URL.revokeObjectURL(url)
+      
+      alert(`✅ Statistiche esportate con successo!\n\nFile: statistiche_${new Date().toISOString().split('T')[0]}.csv\n\nContiene:\n- Statistiche generali\n- Vendite per categoria\n- Top prodotti\n- Ricavi giornalieri\n- Inventario attuale\n- Menu compositi`)
+      
+    } catch (error) {
+      console.error('Errore durante l\'esportazione statistiche:', error)
+      alert('❌ Errore durante l\'esportazione statistiche. Riprova.')
+    } finally {
+      setIsExportingStats(false)
+    }
+  }
+
   // Funzione per importare ordini da CSV
   const importOrdersData = async () => {
     if (!importOrdersFile) {
@@ -823,6 +1016,23 @@ const Settings = () => {
               disabled={isImportingOrders}
             >
               📥 Importa Ordini (CSV)
+            </button>
+          </div>
+        </div>
+
+        {/* Nuova sezione per export statistiche */}
+        <div className="settings-section">
+          <h3>📊 Export Statistiche</h3>
+          <p>Esporta tutte le statistiche e i report in formato CSV per analisi esterne.</p>
+          <p className="info-text">💡 Utile per analisi avanzate in Excel, Google Sheets o altri tool di business intelligence.</p>
+          
+          <div className="stats-actions">
+            <button
+              onClick={exportStatsData}
+              className="export-stats-btn"
+              disabled={isExportingStats}
+            >
+              {isExportingStats ? '📊 Esportazione...' : '📊 Esporta Statistiche (CSV)'}
             </button>
           </div>
         </div>

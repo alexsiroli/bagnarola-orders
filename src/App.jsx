@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from './hooks/useUser'
 import { auth } from './firebase'
 import Auth from './components/Auth'
@@ -26,6 +26,12 @@ function App() {
   ]
 
   const renderSection = () => {
+    // Controlla se la sezione corrente è autorizzata per questo utente
+    const isSectionAuthorized = availableSections.find(s => s.id === currentSection);
+    if (!isSectionAuthorized) {
+      return <div className="section-content">Sezione non autorizzata per il tuo tipo di account</div>;
+    }
+
     switch (currentSection) {
       case 'cassa':
         return <Cassa />
@@ -46,6 +52,60 @@ function App() {
     }
   }
 
+  // Filtra le sezioni in base al tipo di account dell'utente
+  const getAvailableSections = () => {
+    // Se userData non è ancora caricato, mostra tutte le sezioni (fallback sicuro)
+    if (!userData) {
+      return sections;
+    }
+    
+    if (isAdmin()) {
+      // Admin può vedere tutto
+      return sections;
+    } else if (isCassa()) {
+      // Cassa può vedere solo Cassa e Ordini
+      return sections.filter(section => 
+        section.id === 'cassa' || section.id === 'ordini'
+      );
+    } else if (isCucina()) {
+      // Cucina può vedere solo Cucina e Ordini
+      return sections.filter(section => 
+        section.id === 'cucina' || section.id === 'ordini'
+      );
+    }
+    // Fallback: nessuna sezione disponibile
+    return [];
+  };
+
+  const availableSections = getAvailableSections();
+
+  // Debug: log per capire il problema
+  console.log('Debug info:', {
+    userData,
+    accountType: userData?.accountType,
+    isAdmin: isAdmin(),
+    isCassa: isCassa(),
+    isCucina: isCucina(),
+    availableSections: availableSections.length,
+    sections: sections.length
+  });
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    if (!user) {
+      return;
+    }
+
+    // Se la sezione corrente non è disponibile per questo tipo di account,
+    // reindirizza alla prima sezione disponibile
+    if (availableSections.length > 0 && !availableSections.find(s => s.id === currentSection)) {
+      setCurrentSection(availableSections[0].id);
+    }
+  }, [loading, user, currentSection, availableSections]);
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -57,14 +117,6 @@ function App() {
   if (!user) {
     return <Auth />
   }
-
-  // Filtra le sezioni in base ai permessi dell'utente
-  // const availableSections = sections.filter(section => 
-  //   hasPermission(section.requiredPermission)
-  // )
-
-  // Per ora mostra tutte le sezioni (per sviluppo)
-  const availableSections = sections;
 
   // Debug: mostra i dati utente nella console
       // Log rimossi per semplificare la console

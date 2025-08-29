@@ -287,6 +287,41 @@
   white-space: nowrap;
 }
 
+/* Stili per l'export delle statistiche */
+.stats-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.export-stats-btn {
+  padding: 1rem 2rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap;
+}
+
+.export-stats-btn:hover:not(:disabled) {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.export-stats-btn:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .import-orders-btn:hover:not(:disabled) {
   background-color: #d35400;
   transform: translateY(-2px);
@@ -392,7 +427,8 @@
   }
   
   .menu-actions,
-  .orders-actions {
+  .orders-actions,
+  .stats-actions {
     flex-direction: column;
     align-items: center;
   }
@@ -400,7 +436,8 @@
   .export-btn,
   .import-btn,
   .export-orders-btn,
-  .import-orders-btn {
+  .import-orders-btn,
+  .export-stats-btn {
     width: 100%;
     max-width: 300px;
     padding: 0.75rem 1.5rem;
