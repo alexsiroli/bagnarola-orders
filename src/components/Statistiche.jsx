@@ -115,9 +115,14 @@ const Statistiche = () => {
     const productSalesCount = {}
 
     // Analizza gli ordini
+    let validOrdersCount = 0 // Conta solo ordini validi (non staff, non annullati)
+    
     ordersData.forEach(order => {
-      // Salta gli ordini annullati
-      if (order.status === 'annullato') return
+      // Salta gli ordini annullati e quelli dello staff (totale = 0)
+      if (order.status === 'annullato' || order.total === 0) return
+
+      // Conta solo ordini validi per le statistiche
+      validOrdersCount++
 
       // Aggiungi al totale ricavi
       totalRevenue += order.total || 0
@@ -258,8 +263,8 @@ const Statistiche = () => {
     // Imposta le statistiche calcolate
     setStats({
       totalRevenue,
-      totalOrders: ordersData.filter(o => o.status !== 'annullato').length,
-      averageOrderValue: ordersData.length > 0 ? totalRevenue / ordersData.filter(o => o.status !== 'annullato').length : 0,
+      totalOrders: validOrdersCount, // Solo ordini validi (non staff, non annullati)
+      averageOrderValue: validOrdersCount > 0 ? totalRevenue / validOrdersCount : 0, // Calcolato solo su ordini validi
       foodRevenue,
       drinksRevenue,
       menuRevenue,

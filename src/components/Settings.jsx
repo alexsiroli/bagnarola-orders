@@ -622,7 +622,56 @@ const Settings = () => {
       // Esegui import
       await importBatch.commit()
 
-      alert(`✅ Import ordini completato con successo!\n\nImportati: ${importedCount} ordini`)
+      // Aggiorna il contatore degli ordini con l'ultimo numero importato
+      if (importedCount > 0) {
+        try {
+          // Trova l'ordine con il numero più alto tra quelli importati
+          let maxOrderNumber = 0
+          for (const line of dataLines) {
+            try {
+              const values = []
+              let current = ''
+              let inQuotes = false
+              
+              for (let i = 0; i < line.length; i++) {
+                const char = line[i]
+                if (char === '"') {
+                  inQuotes = !inQuotes
+                } else if (char === ',' && !inQuotes) {
+                  values.push(current.trim())
+                  current = ''
+                } else {
+                  current += char
+                }
+              }
+              values.push(current.trim())
+
+              if (values.length >= headers.length) {
+                const orderNumberIndex = headers.findIndex(h => h === 'Numero Ordine')
+                if (orderNumberIndex >= 0) {
+                  const orderNumber = parseInt(values[orderNumberIndex]) || 0
+                  if (orderNumber > maxOrderNumber) {
+                    maxOrderNumber = orderNumber
+                  }
+                }
+              }
+            } catch (error) {
+              console.warn('Errore nel parsing per trovare max numero ordine:', line, error)
+            }
+          }
+
+          // Aggiorna il contatore con il numero più alto trovato
+          if (maxOrderNumber > 0) {
+            const counterRef = doc(db, 'counters', 'orderCounter')
+            await setDoc(counterRef, { currentNumber: maxOrderNumber })
+            console.log(`✅ Contatore ordini aggiornato a: ${maxOrderNumber}`)
+          }
+        } catch (error) {
+          console.warn('Errore nell\'aggiornamento del contatore ordini:', error)
+        }
+      }
+
+      alert(`✅ Import ordini completato con successo!\n\nImportati: ${importedCount} ordini\n\nContatore ordini aggiornato al numero più alto importato`)
       
       setShowImportOrdersDialog(false)
       setImportOrdersFile(null)
