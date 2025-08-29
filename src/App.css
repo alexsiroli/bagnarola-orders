@@ -417,10 +417,11 @@ body {
   font-weight: 600;
   color: #27ae60;
   font-size: 1.1rem;
+  text-align: left !important;
 }
 
 .item-quantity {
-  text-align: center;
+  text-align: left !important;
   color: #7f8c8d;
 }
 
@@ -429,7 +430,7 @@ body {
 .item-actions {
   display: flex;
   gap: 0.4rem;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .item-composition {
