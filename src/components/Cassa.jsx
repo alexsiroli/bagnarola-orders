@@ -10,6 +10,7 @@ const Cassa = () => {
   const [total, setTotal] = useState(0)
   const [showOrderSummary, setShowOrderSummary] = useState(false)
   const [confirmedOrder, setConfirmedOrder] = useState(null)
+  const [isStaffOrder, setIsStaffOrder] = useState(false)
 
   // Carica i prodotti dal menu in tempo reale
   useEffect(() => {
@@ -125,11 +126,15 @@ const Cassa = () => {
     }
   }, [lastOrderNumber])
 
-  // Calcola il totale quando cambia l'ordine
+  // Calcola il totale quando cambia l'ordine o lo stato STAFF
   useEffect(() => {
-    const newTotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    setTotal(newTotal)
-  }, [currentOrder])
+    if (isStaffOrder) {
+      setTotal(0)
+    } else {
+      const newTotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+      setTotal(newTotal)
+    }
+  }, [currentOrder, isStaffOrder])
 
   // Aggiunge un prodotto all'ordine
   const addToOrder = (item) => {
@@ -303,18 +308,22 @@ const Cassa = () => {
       // Non serve più aggiornare le quantità locali qui perché si aggiornano graficamente
       // Le quantità reali vengono aggiornate dal database tramite onSnapshot
 
-      // Reset dell'ordine
+      // Reset dell'ordine PRIMA del popup (così il carrello è vuoto quando si vede il popup)
       setCurrentOrder([])
       setTotal(0)
       setLastOrderNumber(finalOrderNumber)
       setShowOrderSummary(false)
       setConfirmedOrder(null)
+      setIsStaffOrder(false)
 
       // Log del numero dell'ordine creato
       console.log(`🆕 Nuovo ordine creato: #${finalOrderNumber}`)
 
-      // Mostra il popup con il numero dell'ordine solo DOPO la conferma finale
-      alert(`Ordine #${finalOrderNumber} confermato e salvato!`)
+      // Usa setTimeout per mostrare il popup DOPO che React ha aggiornato l'interfaccia
+      // Questo garantisce che il carrello sia vuoto quando si vede il popup
+      setTimeout(() => {
+        alert(`Ordine #${finalOrderNumber} confermato e salvato!`)
+      }, 100)
     } catch (error) {
       console.error('Errore nel salvataggio dell\'ordine:', error)
       alert('Errore nel salvataggio dell\'ordine')
@@ -889,11 +898,29 @@ const Cassa = () => {
 
                   <div className="order-actions">
                     <button
-                      onClick={() => setCurrentOrder([])}
+                      onClick={() => {
+                        setCurrentOrder([])
+                        setIsStaffOrder(false)
+                      }}
                       className="clear-order-btn"
                     >
                       🗑️ Svuota Ordine
                     </button>
+                    
+                    {/* Checkbox STAFF */}
+                    <div 
+                      className="staff-checkbox-container"
+                      onClick={() => setIsStaffOrder(!isStaffOrder)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isStaffOrder}
+                        onChange={(e) => setIsStaffOrder(e.target.checked)}
+                        className="staff-checkbox"
+                      />
+                      <span className="staff-checkbox-text">👥 STAFF</span>
+                    </div>
+                    
                     <button
                       onClick={confirmOrder}
                       className="confirm-order-btn"

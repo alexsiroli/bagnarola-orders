@@ -1446,6 +1446,66 @@ body {
   background-color: #229954;
 }
 
+/* Stili per il checkbox STAFF */
+.staff-checkbox-container {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.staff-checkbox-container:hover {
+  background-color: #e9ecef;
+  border-color: #6c757d;
+}
+
+/* Rimuovo gli stili del label che non serve più */
+
+.staff-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #6c757d;
+  cursor: pointer;
+}
+
+.staff-checkbox-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.staff-notice {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 0.9rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.staff-badge {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #6c757d;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Responsive design per la cassa */
 @media (max-width: 1024px) {
   .cassa-content {
