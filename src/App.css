@@ -1111,11 +1111,34 @@ body {
 }
 
 .item-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   margin-bottom: 0.5rem;
-  width: 100%;
+  width: 100% !important;
+  flex-direction: row !important;
+}
+
+/* Assicura che nome e prezzo siano sempre sulla stessa riga per tutti gli item */
+.order-item .item-info {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  flex-direction: row !important;
+}
+
+.order-item .item-name {
+  flex: 1 !important;
+  margin-right: 1rem !important;
+  display: inline-block !important;
+}
+
+.order-item .item-price {
+  text-align: right !important;
+  min-width: 60px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
 }
 
 .item-name {
@@ -1226,8 +1249,13 @@ body {
   flex-shrink: 0;
 }
 
+/* Specific rule for Cassa component to ensure buttons stack vertically */
+.cassa-section .order-actions {
+  flex-direction: column !important;
+}
+
 .clear-order-btn, .confirm-order-btn {
-  flex: 1;
+  width: 100%;
   padding: 0.75rem;
   border: none;
   border-radius: 6px;
@@ -1336,6 +1364,28 @@ body {
   background-color: #f8f9fa;
   border-radius: 6px;
   margin-bottom: 0.5rem;
+}
+
+/* Assicura che nome e prezzo siano sempre sulla stessa riga */
+.confirmed-order-item .item-info {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  flex-direction: row !important;
+}
+
+.confirmed-order-item .item-name {
+  flex: 1 !important;
+  margin-right: 1rem !important;
+  display: inline-block !important;
+}
+
+.confirmed-order-item .item-price {
+  text-align: right !important;
+  min-width: 60px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
 }
 
 .confirmed-order-total {

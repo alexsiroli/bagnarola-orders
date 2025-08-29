@@ -20,6 +20,21 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Configura Firestore per ridurre warning
+const firestoreSettings = {
+  ignoreUndefinedProperties: true,
+  experimentalForceLongPolling: false,
+  useFetchStreams: false
+};
+
+// Applica le impostazioni se supportate
+try {
+  // @ts-ignore - Impostazioni sperimentali
+  db.settings(firestoreSettings);
+} catch (error) {
+  console.warn('Impossibile applicare impostazioni Firestore avanzate:', error);
+}
+
 // Debug: verifica connessione Firestore
 console.log('Firebase initialized with project:', firebaseConfig.projectId);
 

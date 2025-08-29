@@ -1,0 +1,211 @@
+.settings-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.settings-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-bottom: 2px solid #3498db;
+}
+
+.settings-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.settings-header p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.settings-content {
+  display: grid;
+  gap: 2rem;
+}
+
+.settings-section {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+}
+
+.settings-section h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #3498db;
+  font-size: 1.3rem;
+}
+
+.settings-section p {
+  color: #495057;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.warning-text {
+  color: #e74c3c !important;
+  font-weight: 600;
+  background-color: #fdf2f2;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 4px solid #e74c3c;
+}
+
+.reset-actions {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.reset-btn {
+  padding: 1rem 2rem;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.reset-btn:hover:not(:disabled) {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.reset-btn:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.system-info {
+  display: grid;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  color: #3498db;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Stili per il dialog di conferma */
+.settings-dialog {
+  max-width: 500px;
+}
+
+.confirm-message {
+  text-align: center;
+}
+
+.confirm-message p {
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.confirm-message ul {
+  text-align: left;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.confirm-message li {
+  margin-bottom: 0.5rem;
+  color: #495057;
+  line-height: 1.4;
+}
+
+.final-warning {
+  font-weight: 600;
+  color: #e74c3c !important;
+  font-size: 1.1rem;
+  margin-top: 1.5rem !important;
+}
+
+.confirm-reset-btn {
+  background-color: #e74c3c !important;
+  color: white;
+}
+
+.confirm-reset-btn:hover:not(:disabled) {
+  background-color: #c0392b !important;
+}
+
+.confirm-reset-btn:disabled {
+  background-color: #bdc3c7 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 0.5rem;
+  }
+  
+  .settings-section {
+    padding: 1rem;
+  }
+  
+  .reset-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    width: 100%;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .settings-dialog {
+    max-width: 95%;
+    margin: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .settings-header p {
+    font-size: 0.9rem;
+  }
+  
+  .settings-section h3 {
+    font-size: 1.2rem;
+  }
+}

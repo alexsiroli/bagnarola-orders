@@ -5,6 +5,7 @@ import Auth from './components/Auth'
 import Menu from './components/Menu'
 import Cassa from './components/Cassa'
 import Orders from './components/Orders'
+import Settings from './components/Settings'
 import './App.css'
 
 function App() {
@@ -30,7 +31,7 @@ function App() {
       case 'menu':
         return <Menu />
       case 'impostazioni':
-        return <div className="section-content">Pagina Impostazioni - Configurazione sistema</div>
+        return <Settings />
       default:
         return <div className="section-content">Benvenuto nel sistema di gestione ristorante</div>
     }
@@ -67,7 +68,7 @@ function App() {
         <div className="header-content">
           <div className="header-left">
             <h1>Bagnarola Orders</h1>
-            <p>Sistema di gestione ordinazioni ristorante</p>
+            <p>Sistema di gestione ordinazioni</p>
           </div>
           <div className="header-right">
             <div className="user-info-header">

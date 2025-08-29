@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { collection, addDoc, onSnapshot, query, orderBy, getDocs, updateDoc, doc, increment, where } from 'firebase/firestore'
+import { collection, addDoc, onSnapshot, query, orderBy, getDocs, updateDoc, doc, increment, where, getDoc, setDoc, runTransaction } from 'firebase/firestore'
 
 const Cassa = () => {
   const [menuItems, setMenuItems] = useState([])
@@ -21,6 +21,9 @@ const Cassa = () => {
         items.push({ id: doc.id, ...doc.data() })
       })
       setMenuItems(items)
+    }, (error) => {
+      console.warn('Warning nella query menu:', error)
+      // Continua a funzionare anche con warning
     })
 
     // Sottoscrizione ai menu compositi
@@ -31,6 +34,9 @@ const Cassa = () => {
         compositi.push({ id: doc.id, ...doc.data() })
       })
       setMenuCompositi(compositi)
+    }, (error) => {
+      console.warn('Warning nella query menu compositi:', error)
+      // Continua a funzionare anche con warning
     })
 
     // Listener specifico per aggiornamenti delle quantità in tempo reale
@@ -61,6 +67,9 @@ const Cassa = () => {
           }))
         }
       })
+    }, (error) => {
+      console.warn('Warning nella query quantità:', error)
+      // Continua a funzionare anche con warning
     })
 
     // Cleanup delle sottoscrizioni
@@ -105,6 +114,9 @@ const Cassa = () => {
           console.log(`Nuovo ordine rilevato: #${newLastOrderNumber}`)
         }
       }
+    }, (error) => {
+      console.warn('Warning nella query ordini:', error)
+      // Continua a funzionare anche con warning
     })
 
     // Cleanup del listener
@@ -201,23 +213,85 @@ const Cassa = () => {
     setShowOrderSummary(true)
   }
 
+  // Funzione per ottenere il prossimo numero d'ordine usando transazione atomica
+  const getNextOrderNumber = async () => {
+    try {
+      const result = await runTransaction(db, async (transaction) => {
+        const counterRef = doc(db, 'counters', 'orderCounter')
+        const counterDoc = await transaction.get(counterRef)
+        
+        let newNumber = 1
+        
+        if (counterDoc.exists()) {
+          // Se esiste, incrementa di 1
+          newNumber = counterDoc.data().currentNumber + 1
+          console.log('📊 Contatore esistente, incremento da:', counterDoc.data().currentNumber, 'a:', newNumber)
+        } else {
+          // Se non esiste, inizia da 1
+          console.log('🆕 Contatore non trovato, creo nuovo contatore con valore 1')
+        }
+        
+        // Aggiorna o crea il contatore
+        transaction.set(counterRef, { currentNumber: newNumber })
+        
+        return newNumber
+      })
+      
+      console.log('✅ Transazione completata, nuovo numero ordine:', result)
+      return result
+      
+    } catch (error) {
+      console.error('❌ Errore nella transazione del contatore:', error)
+      
+      // Fallback: usa timestamp come numero univoco
+      const timestamp = Date.now()
+      console.log('🔄 Fallback: uso timestamp come numero ordine:', timestamp)
+      return timestamp
+    }
+  }
+
   // Salva effettivamente l'ordine nel database e assegna il numero d'ordine
   const saveOrder = async () => {
     try {
-      // Controlla l'ultimo ordine sul database nel momento del salvataggio
-      const ordersQuery = query(collection(db, 'ordini'), orderBy('orderNumber', 'desc'))
-      const ordersSnapshot = await getDocs(ordersQuery)
+      // Ottieni il prossimo numero d'ordine in modo atomico
+      const newOrderNumber = await getNextOrderNumber()
+
+      // Controlla se il numero d'ordine è già stato usato (doppio controllo)
+      const duplicateCheck = query(
+        collection(db, 'ordini'), 
+        where('orderNumber', '==', newOrderNumber)
+      )
+      const duplicateSnapshot = await getDocs(duplicateCheck)
       
-      let newOrderNumber = 1
-      if (!ordersSnapshot.empty) {
-        const lastOrder = ordersSnapshot.docs[0].data()
-        newOrderNumber = lastOrder.orderNumber + 1
+      let finalOrderNumber = newOrderNumber
+      
+      if (!duplicateSnapshot.empty) {
+        console.warn('⚠️ Numero ordine duplicato rilevato, riprovo...')
+        // Se c'è un duplicato, riprova con un nuovo numero
+        const retryNumber = await getNextOrderNumber()
+        console.log('🔄 Nuovo tentativo con numero:', retryNumber)
+        
+        // Controlla di nuovo
+        const retryCheck = query(
+          collection(db, 'ordini'), 
+          where('orderNumber', '==', retryNumber)
+        )
+        const retrySnapshot = await getDocs(retryCheck)
+        
+        if (!retrySnapshot.empty) {
+          // Se anche il secondo tentativo fallisce, usa timestamp
+          const timestamp = Date.now()
+          console.log('🚨 Fallback finale: uso timestamp:', timestamp)
+          finalOrderNumber = timestamp
+        } else {
+          finalOrderNumber = retryNumber
+        }
       }
 
       // Aggiungi il numero dell'ordine ai dati dell'ordine
       const finalOrderData = {
         ...confirmedOrder,
-        orderNumber: newOrderNumber
+        orderNumber: finalOrderNumber
       }
 
       // Salva l'ordine nel database
@@ -232,15 +306,15 @@ const Cassa = () => {
       // Reset dell'ordine
       setCurrentOrder([])
       setTotal(0)
-      setLastOrderNumber(newOrderNumber)
+      setLastOrderNumber(finalOrderNumber)
       setShowOrderSummary(false)
       setConfirmedOrder(null)
 
       // Log del numero dell'ordine creato
-      console.log(`🆕 Nuovo ordine creato: #${newOrderNumber}`)
+      console.log(`🆕 Nuovo ordine creato: #${finalOrderNumber}`)
 
       // Mostra il popup con il numero dell'ordine solo DOPO la conferma finale
-      alert(`Ordine #${newOrderNumber} confermato e salvato!`)
+      alert(`Ordine #${finalOrderNumber} confermato e salvato!`)
     } catch (error) {
       console.error('Errore nel salvataggio dell\'ordine:', error)
       alert('Errore nel salvataggio dell\'ordine')
